@@ -1,23 +1,25 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const dotenv = require("dotenv");
-
-dotenv.config(); // Đọc biến môi trường từ file .env
+const cors = require("cors");
+require("dotenv").config();
 
 const app = express();
-app.use(express.json());
 
-// Import routes
-const userRoutes = require("./routes/user");
-app.use("/", userRoutes);
+// middleware
+app.use(cors());
+app.use(express.json());   // <---- rất quan trọng để đọc JSON từ frontend
 
-// Kết nối MongoDB Atlas
+// connect Mongo
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
-  useUnifiedTopology: true,
+  useUnifiedTopology: true
 })
-.then(() => console.log("✅ MongoDB Atlas connected"))
-.catch(err => console.error("❌ MongoDB connection error:", err));
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch(err => console.error("❌ MongoDB connection error:", err));
+
+// routes
+const userRoutes = require("./routes/user");
+app.use("/users", userRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

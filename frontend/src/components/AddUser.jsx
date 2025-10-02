@@ -6,12 +6,16 @@ const AddUser = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
     axios.post("http://localhost:3000/users", form)
       .then(() => {
         alert("User đã được thêm!");
         setForm({ name: "", email: "" });
       })
-      .catch(err => console.error(err));
+      .catch((err) => {
+        console.error("Lỗi khi thêm user:", err);
+        alert("Có lỗi xảy ra khi thêm user!");
+      });
   };
 
   return (
