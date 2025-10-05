@@ -8,44 +8,16 @@ const AddUser = ({ onUserAdded }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validation cơ bản
-    if (!form.name.trim() || !form.email.trim()) {
-      alert("⚠️ Vui lòng điền đầy đủ Tên và Email!");
-      return;
-    }
 
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // Gửi POST request đến backend
-      const response = await axios.post("http://localhost:3000/users", form);
-      
-      console.log("✅ User đã được thêm vào MongoDB:", response.data);
-      alert(`✅ Thêm thành công: ${response.data.name}`);
-      
-      // Reset form
-      setForm({ name: "", email: "" });
-      
-      // Gọi callback để refresh danh sách
-      if (onUserAdded) {
-        onUserAdded();
-      }
-      
-    } catch (err) {
-      console.error("❌ Lỗi khi thêm user:", err);
-      
-      if (err.response && err.response.data && err.response.data.error) {
-        setError(err.response.data.error);
-        alert(`❌ Lỗi: ${err.response.data.error}`);
-      } else {
-        setError("Có lỗi xảy ra khi thêm user!");
-        alert("❌ Có lỗi xảy ra khi thêm user! Kiểm tra backend.");
-      }
-    } finally {
-      setLoading(false);
-    }
+    axios.post("http://localhost:3000/users", form)
+      .then(() => {
+        alert("User đã được thêm!");
+        setForm({ name: "", email: "" });
+      })
+      .catch((err) => {
+        console.error("Lỗi khi thêm user:", err);
+        alert("Có lỗi xảy ra khi thêm user!");
+      });
   };
 
   return (
