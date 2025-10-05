@@ -1,6 +1,26 @@
 // controllers/userController.js
 const User = require("../models/User");
 
+// PUT: cập nhật user
+exports.updateUser = async (req, res) => {
+  try {
+    const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(updatedUser);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// DELETE: xóa user
+exports.deleteUser = async (req, res) => {
+  try {
+    await User.findByIdAndDelete(req.params.id);
+    res.json({ message: "User deleted" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 // GET: Lấy danh sách người dùng
 exports.getUsers = async (req, res) => {
     try {

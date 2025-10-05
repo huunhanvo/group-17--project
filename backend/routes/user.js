@@ -8,5 +8,6 @@ router.get("/", userController.getUsers);
 
 // POST /users → Tạo mới một user
 router.post("/", userController.createUser);
-
+router.put('/:id', userController.updateUser);   // PUT
+router.delete('/:id', userController.deleteUser); // DELETE
 module.exports = router;
