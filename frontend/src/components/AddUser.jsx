@@ -5,19 +5,53 @@ const AddUser = ({ onUserAdded }) => {
   const [form, setForm] = useState({ name: "", email: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+
+  // Validation phía frontend
+  const validateForm = () => {
+    if (!form.name || !form.email) {
+      return "Vui lòng nhập đầy đủ thông tin!";
+    }
+    if (form.name.length < 3) {
+      return "Tên phải có ít nhất 3 ký tự!";
+    }
+    const emailRegex = /^\S+@\S+\.\S+$/;
+    if (!emailRegex.test(form.email)) {
+      return "Email không hợp lệ!";
+    }
+    return null;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
+    setSuccess(null);
 
-    axios.post("http://localhost:3000/users", form)
-      .then(() => {
-        alert("User đã được thêm!");
-        setForm({ name: "", email: "" });
-      })
-      .catch((err) => {
-        console.error("Lỗi khi thêm user:", err);
-        alert("Có lỗi xảy ra khi thêm user!");
-      });
+    // Kiểm tra dữ liệu trước khi gọi API
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await axios.post("http://localhost:3000/users", form);
+      setSuccess("✅ User đã được thêm thành công!");
+      setForm({ name: "", email: "" });
+      if (onUserAdded) onUserAdded(); // gọi lại danh sách
+    } catch (err) {
+      console.error("Lỗi khi thêm user:", err);
+
+      // Hiển thị lỗi cụ thể từ backend (Mongo validation hoặc unique)
+      if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError("❌ Có lỗi xảy ra khi thêm user!");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -69,7 +103,10 @@ const AddUser = ({ onUserAdded }) => {
           </button>
         </div>
       </form>
-      {error && <p style={{ color: "red", marginTop: "10px" }}>❌ {error}</p>}
+
+      {/* Hiển thị thông báo lỗi hoặc thành công */}
+      {error && <p style={{ color: "red", marginTop: "10px" }}>{error}</p>}
+      {success && <p style={{ color: "green", marginTop: "10px" }}>{success}</p>}
     </div>
   );
 };
