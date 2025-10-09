@@ -12,7 +12,7 @@ const UserList = () => {
   }, []);
 
   const fetchUsers = () => {
-    axios.get("http://localhost:3000/users")
+    axios.get("http://localhost:5000/users")
       .then(res => setUsers(res.data))
       .catch(err => console.error(err));
   };
@@ -20,7 +20,7 @@ const UserList = () => {
   // Xử lý xóa user
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:3000/users/${id}`);
+      await axios.delete(`http://localhost:5000/users/${id}`);
       fetchUsers();
     } catch (err) {
       console.error("Lỗi khi xóa:", err);
@@ -37,7 +37,7 @@ const UserList = () => {
   // Cập nhật user
   const handleUpdate = async () => {
     try {
-      await axios.put(`http://localhost:3000/users/${editUser}`, { name, email });
+      await axios.put(`http://localhost:5000/users/${editUser}`, { name, email });
       setEditUser(null);
       setName("");
       setEmail("");

@@ -36,7 +36,7 @@ const AddUser = ({ onUserAdded }) => {
 
     setLoading(true);
     try {
-      await axios.post("http://localhost:3000/users", form);
+      await axios.post("http://localhost:5000/users", form);
       setSuccess("✅ User đã được thêm thành công!");
       setForm({ name: "", email: "" });
       if (onUserAdded) onUserAdded(); // gọi lại danh sách
