@@ -1,4 +1,4 @@
 @echo off
-cd /d "%~dp0"
+cd /e "%~dp0"
 echo Starting Backend Server...
 node server.js
