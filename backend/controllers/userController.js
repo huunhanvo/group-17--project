@@ -1,24 +1,64 @@
 // controllers/userController.js
 const User = require("../models/User");
 
-// PUT: cập nhật user
-exports.updateUser = async (req, res) => {
-  try {
-    const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    res.json(updatedUser);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+// GET: Lấy danh sách tất cả người dùng (Admin only)
+exports.getAllUsers = async (req, res) => {
+    try {
+        const users = await User.find()
+            .select("-password") // Không trả về password
+            .sort({ createdAt: -1 }); // Mới nhất lên trước
+
+        res.status(200).json({
+            success: true,
+            count: users.length,
+            users: users
+        });
+    } catch (err) {
+        console.error("❌ Get all users error:", err);
+        res.status(500).json({ 
+            success: false,
+            message: "Lỗi khi lấy danh sách users",
+            error: err.message 
+        });
+    }
 };
 
-// DELETE: xóa user
+// DELETE: Xóa user (Admin only hoặc tự xóa)
 exports.deleteUser = async (req, res) => {
-  try {
-    await User.findByIdAndDelete(req.params.id);
-    res.json({ message: "User deleted" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+    try {
+        const { id } = req.params;
+
+        // Kiểm tra user có tồn tại không
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({ 
+                success: false,
+                message: "Không tìm thấy user" 
+            });
+        }
+
+        // Không cho phép xóa chính mình (Admin)
+        if (req.user._id.toString() === id) {
+            return res.status(400).json({
+                success: false,
+                message: "Không thể xóa chính bản thân"
+            });
+        }
+
+        await User.findByIdAndDelete(id);
+
+        res.status(200).json({ 
+            success: true,
+            message: "Đã xóa user thành công" 
+        });
+    } catch (err) {
+        console.error("❌ Delete user error:", err);
+        res.status(500).json({ 
+            success: false,
+            message: "Lỗi khi xóa user",
+            error: err.message 
+        });
+    }
 };
 
 // GET: Lấy danh sách người dùng

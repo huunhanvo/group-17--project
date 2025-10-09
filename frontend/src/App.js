@@ -4,11 +4,12 @@ import AddUser from "./components/AddUser";
 import SignUp from "./components/SignUp";
 import Login from "./components/Login";
 import Profile from "./components/Profile";
+import AdminPanel from "./components/AdminPanel";
 import "./App.css";
 
 function App() {
   const [refreshKey, setRefreshKey] = useState(0);
-  const [currentView, setCurrentView] = useState("login"); // "login", "signup", "dashboard", "profile"
+  const [currentView, setCurrentView] = useState("login"); // "login", "signup", "dashboard", "profile", "admin"
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
 
@@ -78,7 +79,7 @@ function App() {
         </h1>
 
         {/* Header với thông tin user nếu đã đăng nhập */}
-        {user && (currentView === "dashboard" || currentView === "profile") && (
+        {user && (currentView === "dashboard" || currentView === "profile" || currentView === "admin") && (
           <div style={{
             backgroundColor: "#e8f5e9",
             padding: "15px",
@@ -126,6 +127,25 @@ function App() {
               >
                 👤 Profile
               </button>
+              
+              {/* Chỉ hiển thị nút Admin nếu user có role admin */}
+              {user.role === "admin" && (
+                <button
+                  onClick={() => setCurrentView("admin")}
+                  style={{
+                    padding: "10px 20px",
+                    backgroundColor: currentView === "admin" ? "#9C27B0" : "#2196F3",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "5px",
+                    cursor: "pointer",
+                    fontWeight: "bold"
+                  }}
+                >
+                  👑 Admin
+                </button>
+              )}
+
               <button
                 onClick={handleLogout}
                 style={{
@@ -203,6 +223,10 @@ function App() {
           {currentView === "profile" && (
             <Profile />
           )}
+
+          {currentView === "admin" && user.role === "admin" && (
+            <AdminPanel />
+          )}
         </div>
 
         <footer style={{
@@ -213,7 +237,7 @@ function App() {
           borderTop: "1px solid #ddd"
         }}>
           <p>📚 Buổi 5 - Ứng dụng hoàn chỉnh với Authentication & User Management</p>
-          <p>✅ Hoạt động 2: Quản lý thông tin cá nhân (Profile)</p>
+          <p>✅ Hoạt động 3: Quản lý User (Admin - RBAC)</p>
         </footer>
       </div>
     </div>
