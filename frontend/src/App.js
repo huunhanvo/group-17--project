@@ -5,11 +5,13 @@ import SignUp from "./components/SignUp";
 import Login from "./components/Login";
 import Profile from "./components/Profile";
 import AdminPanel from "./components/AdminPanel";
+import ForgotPassword from "./components/ForgotPassword";
+import ResetPassword from "./components/ResetPassword";
 import "./App.css";
 
 function App() {
   const [refreshKey, setRefreshKey] = useState(0);
-  const [currentView, setCurrentView] = useState("login"); // "login", "signup", "dashboard", "profile", "admin"
+  const [currentView, setCurrentView] = useState("login"); // "login", "signup", "dashboard", "profile", "admin", "forgot-password", "reset-password"
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
 
@@ -185,6 +187,21 @@ function App() {
                   Đăng ký ngay
                 </button>
               </p>
+              <p style={{ textAlign: "center", marginTop: "10px" }}>
+                <button
+                  onClick={() => setCurrentView("forgot-password")}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#FF9800",
+                    textDecoration: "underline",
+                    cursor: "pointer",
+                    fontWeight: "bold"
+                  }}
+                >
+                  🔑 Quên mật khẩu?
+                </button>
+              </p>
             </>
           )}
 
@@ -227,6 +244,76 @@ function App() {
           {currentView === "admin" && user.role === "admin" && (
             <AdminPanel />
           )}
+
+          {currentView === "forgot-password" && (
+            <>
+              <ForgotPassword />
+              <p style={{ textAlign: "center", marginTop: "15px" }}>
+                <button
+                  onClick={() => setCurrentView("login")}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#4CAF50",
+                    textDecoration: "underline",
+                    cursor: "pointer",
+                    fontWeight: "bold"
+                  }}
+                >
+                  ← Quay lại đăng nhập
+                </button>
+                {" | "}
+                <button
+                  onClick={() => setCurrentView("reset-password")}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#2196F3",
+                    textDecoration: "underline",
+                    cursor: "pointer",
+                    fontWeight: "bold"
+                  }}
+                >
+                  Đã có token reset →
+                </button>
+              </p>
+            </>
+          )}
+
+          {currentView === "reset-password" && (
+            <>
+              <ResetPassword />
+              <p style={{ textAlign: "center", marginTop: "15px" }}>
+                <button
+                  onClick={() => setCurrentView("forgot-password")}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#FF9800",
+                    textDecoration: "underline",
+                    cursor: "pointer",
+                    fontWeight: "bold"
+                  }}
+                >
+                  ← Lấy token reset mới
+                </button>
+                {" | "}
+                <button
+                  onClick={() => setCurrentView("login")}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#4CAF50",
+                    textDecoration: "underline",
+                    cursor: "pointer",
+                    fontWeight: "bold"
+                  }}
+                >
+                  Quay lại đăng nhập →
+                </button>
+              </p>
+            </>
+          )}
         </div>
 
         <footer style={{
@@ -237,7 +324,7 @@ function App() {
           borderTop: "1px solid #ddd"
         }}>
           <p>📚 Buổi 5 - Ứng dụng hoàn chỉnh với Authentication & User Management</p>
-          <p>✅ Hoạt động 3: Quản lý User (Admin - RBAC)</p>
+          <p>✅ Hoạt động 4: Tính năng nâng cao (Forgot/Reset Password, Upload Avatar)</p>
         </footer>
       </div>
     </div>

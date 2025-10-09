@@ -20,6 +20,11 @@ function Profile() {
   const [error, setError] = useState("");
   const [updateLoading, setUpdateLoading] = useState(false);
 
+  // Avatar upload states
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [avatarLoading, setAvatarLoading] = useState(false);
+
   // Lấy token từ localStorage
   const token = localStorage.getItem("token");
 
@@ -57,6 +62,78 @@ function Profile() {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  // Handle avatar file selection
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Kiểm tra loại file
+      if (!file.type.startsWith('image/')) {
+        setError("❌ Vui lòng chọn file ảnh");
+        return;
+      }
+
+      // Kiểm tra kích thước (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setError("❌ Ảnh không được vượt quá 5MB");
+        return;
+      }
+
+      setAvatarFile(file);
+
+      // Preview ảnh
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Upload avatar
+  const handleAvatarUpload = async () => {
+    if (!avatarFile) {
+      setError("❌ Vui lòng chọn ảnh trước");
+      return;
+    }
+
+    try {
+      setAvatarLoading(true);
+      setError("");
+      setMessage("");
+
+      // Chuyển file thành base64
+      const reader = new FileReader();
+      reader.readAsDataURL(avatarFile);
+      reader.onloadend = async () => {
+        const base64String = reader.result;
+
+        const response = await axios.post(
+          "http://localhost:5000/auth/upload-avatar",
+          { avatar: base64String },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json"
+            }
+          }
+        );
+
+        if (response.data.success) {
+          setMessage("✅ Upload avatar thành công!");
+          // Cập nhật lại thông tin user
+          await fetchUserProfile();
+          setAvatarFile(null);
+          setAvatarPreview(null);
+        }
+      };
+    } catch (err) {
+      console.error("Error uploading avatar:", err);
+      setError(err.response?.data?.message || "❌ Lỗi upload avatar");
+    } finally {
+      setAvatarLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -187,6 +264,42 @@ function Profile() {
       {!editMode ? (
         // Chế độ xem
         <div>
+          {/* Avatar Display */}
+          <div style={{ 
+            textAlign: "center", 
+            marginBottom: "20px" 
+          }}>
+            {user.avatar ? (
+              <img 
+                src={user.avatar} 
+                alt="Avatar" 
+                style={{
+                  width: "120px",
+                  height: "120px",
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  border: "3px solid #FF9800",
+                  marginBottom: "10px"
+                }}
+              />
+            ) : (
+              <div style={{
+                width: "120px",
+                height: "120px",
+                borderRadius: "50%",
+                backgroundColor: "#e0e0e0",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "48px",
+                border: "3px solid #FF9800",
+                marginBottom: "10px"
+              }}>
+                👤
+              </div>
+            )}
+          </div>
+
           <div style={{ marginBottom: "20px" }}>
             <p style={{ marginBottom: "10px" }}>
               <strong>Tên:</strong> {user.name}
@@ -222,6 +335,112 @@ function Profile() {
       ) : (
         // Chế độ chỉnh sửa
         <form onSubmit={handleSubmit}>
+          {/* Upload Avatar Section */}
+          <div style={{ 
+            marginBottom: "20px", 
+            padding: "15px", 
+            backgroundColor: "#f9f9f9",
+            borderRadius: "8px",
+            border: "1px dashed #FF9800"
+          }}>
+            <h3 style={{ 
+              color: "#FF9800", 
+              marginBottom: "10px",
+              fontSize: "16px"
+            }}>
+              📸 Upload Avatar
+            </h3>
+            
+            {/* Current Avatar or Preview */}
+            <div style={{ 
+              textAlign: "center", 
+              marginBottom: "15px" 
+            }}>
+              {avatarPreview ? (
+                <img 
+                  src={avatarPreview} 
+                  alt="Avatar Preview" 
+                  style={{
+                    width: "100px",
+                    height: "100px",
+                    borderRadius: "50%",
+                    objectFit: "cover",
+                    border: "3px solid #4CAF50"
+                  }}
+                />
+              ) : user.avatar ? (
+                <img 
+                  src={user.avatar} 
+                  alt="Current Avatar" 
+                  style={{
+                    width: "100px",
+                    height: "100px",
+                    borderRadius: "50%",
+                    objectFit: "cover",
+                    border: "3px solid #FF9800"
+                  }}
+                />
+              ) : (
+                <div style={{
+                  width: "100px",
+                  height: "100px",
+                  borderRadius: "50%",
+                  backgroundColor: "#e0e0e0",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "36px",
+                  border: "3px solid #ccc"
+                }}>
+                  👤
+                </div>
+              )}
+            </div>
+
+            {/* File Input */}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarChange}
+              style={{
+                display: "block",
+                margin: "0 auto 10px",
+                fontSize: "14px"
+              }}
+            />
+
+            {/* Upload Button */}
+            <button
+              type="button"
+              onClick={handleAvatarUpload}
+              disabled={!avatarFile || avatarLoading}
+              style={{
+                width: "100%",
+                padding: "10px",
+                backgroundColor: (!avatarFile || avatarLoading) ? "#ccc" : "#4CAF50",
+                color: "white",
+                border: "none",
+                borderRadius: "5px",
+                fontSize: "14px",
+                fontWeight: "bold",
+                cursor: (!avatarFile || avatarLoading) ? "not-allowed" : "pointer"
+              }}
+            >
+              {avatarLoading ? "⏳ Đang upload..." : "⬆️ Upload Avatar"}
+            </button>
+
+            <p style={{ 
+              fontSize: "12px", 
+              color: "#666", 
+              marginTop: "8px",
+              textAlign: "center"
+            }}>
+              Max 5MB, định dạng: JPG, PNG, GIF
+            </p>
+          </div>
+
+          <hr style={{ margin: "20px 0" }} />
+
           <div style={{ marginBottom: "15px" }}>
             <label style={{ display: "block", fontWeight: "bold", marginBottom: "5px" }}>
               Tên:

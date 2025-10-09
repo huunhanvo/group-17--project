@@ -265,3 +265,144 @@ exports.updateProfile = async (req, res) => {
         });
     }
 };
+
+// @desc    Quên mật khẩu - Gửi reset token
+// @route   POST /auth/forgot-password
+// @access  Public
+exports.forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: "Vui lòng cung cấp email"
+            });
+        }
+
+        const user = await User.findOne({ email: email.toLowerCase() });
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "Không tìm thấy user với email này"
+            });
+        }
+
+        // Tạo reset token
+        const resetToken = user.getResetPasswordToken();
+        await user.save({ validateBeforeSave: false });
+
+        // Trong thực tế, bạn sẽ gửi email chứa link reset
+        // Ở đây chỉ trả về token để demo
+        res.status(200).json({
+            success: true,
+            message: "Reset token đã được tạo. Trong thực tế, token sẽ được gửi qua email.",
+            resetToken: resetToken, // CHỈ ĐỂ DEMO - Thực tế không trả về
+            resetUrl: `http://localhost:3000/reset-password/${resetToken}`
+        });
+    } catch (error) {
+        console.error("❌ Forgot password error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Lỗi khi xử lý quên mật khẩu",
+            error: error.message
+        });
+    }
+};
+
+// @desc    Reset mật khẩu với token
+// @route   POST /auth/reset-password/:resetToken
+// @access  Public
+exports.resetPassword = async (req, res) => {
+    try {
+        const { newPassword } = req.body;
+        const resetToken = req.params.resetToken;
+
+        if (!newPassword) {
+            return res.status(400).json({
+                success: false,
+                message: "Vui lòng cung cấp mật khẩu mới"
+            });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({
+                success: false,
+                message: "Mật khẩu phải có ít nhất 6 ký tự"
+            });
+        }
+
+        // Hash token từ URL để so sánh với DB
+        const crypto = require("crypto");
+        const resetPasswordToken = crypto
+            .createHash("sha256")
+            .update(resetToken)
+            .digest("hex");
+
+        // Tìm user với token và kiểm tra expiry
+        const user = await User.findOne({
+            resetPasswordToken,
+            resetPasswordExpire: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.status(400).json({
+                success: false,
+                message: "Token không hợp lệ hoặc đã hết hạn"
+            });
+        }
+
+        // Đặt mật khẩu mới
+        user.password = newPassword;
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpire = undefined;
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Đổi mật khẩu thành công. Bạn có thể đăng nhập với mật khẩu mới."
+        });
+    } catch (error) {
+        console.error("❌ Reset password error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Lỗi khi reset mật khẩu",
+            error: error.message
+        });
+    }
+};
+
+// @desc    Upload avatar
+// @route   POST /auth/upload-avatar
+// @access  Private
+exports.uploadAvatar = async (req, res) => {
+    try {
+        const { avatar } = req.body;
+
+        if (!avatar) {
+            return res.status(400).json({
+                success: false,
+                message: "Vui lòng cung cấp URL ảnh hoặc base64"
+            });
+        }
+
+        // Cập nhật avatar cho user
+        const user = await User.findById(req.user._id);
+        user.avatar = avatar;
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Cập nhật avatar thành công",
+            avatar: user.avatar
+        });
+    } catch (error) {
+        console.error("❌ Upload avatar error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Lỗi khi upload avatar",
+            error: error.message
+        });
+    }
+};
