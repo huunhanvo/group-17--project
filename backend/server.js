@@ -7,7 +7,9 @@ const app = express();
 
 // middleware
 app.use(cors());
-app.use(express.json());   // <---- rất quan trọng để đọc JSON từ frontend
+// Tăng giới hạn body size để upload ảnh base64 (default: 100kb → 50mb)
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // connect Mongo
 mongoose.connect(process.env.MONGO_URI, {
