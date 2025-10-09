@@ -164,3 +164,104 @@ exports.getMe = async (req, res) => {
         });
     }
 };
+
+// @desc    Cập nhật thông tin cá nhân (Profile)
+// @route   PUT /auth/profile
+// @access  Private
+exports.updateProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).select("+password");
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "Không tìm thấy user"
+            });
+        }
+
+        // Các trường có thể cập nhật
+        const { name, email, currentPassword, newPassword, avatar } = req.body;
+
+        // Cập nhật name nếu có
+        if (name && name !== user.name) {
+            if (name.trim().length < 3) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Tên phải có ít nhất 3 ký tự"
+                });
+            }
+            user.name = name.trim();
+        }
+
+        // Cập nhật email nếu có
+        if (email && email !== user.email) {
+            // Kiểm tra email đã tồn tại chưa
+            const emailExists = await User.findOne({ email: email.toLowerCase() });
+            if (emailExists && emailExists._id.toString() !== user._id.toString()) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Email đã được sử dụng bởi tài khoản khác"
+                });
+            }
+            user.email = email.toLowerCase();
+        }
+
+        // Cập nhật password nếu có
+        if (newPassword) {
+            // Yêu cầu nhập mật khẩu hiện tại để xác thực
+            if (!currentPassword) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Vui lòng nhập mật khẩu hiện tại để đổi mật khẩu mới"
+                });
+            }
+
+            // Kiểm tra mật khẩu hiện tại có đúng không
+            const isPasswordMatch = await user.comparePassword(currentPassword);
+            if (!isPasswordMatch) {
+                return res.status(401).json({
+                    success: false,
+                    message: "Mật khẩu hiện tại không đúng"
+                });
+            }
+
+            // Validate password mới
+            if (newPassword.length < 6) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Mật khẩu mới phải có ít nhất 6 ký tự"
+                });
+            }
+
+            user.password = newPassword; // Sẽ tự động hash nhờ pre-save hook
+        }
+
+        // Cập nhật avatar nếu có
+        if (avatar !== undefined) {
+            user.avatar = avatar;
+        }
+
+        // Lưu user
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Cập nhật thông tin thành công",
+            user: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                avatar: user.avatar,
+                updatedAt: user.updatedAt
+            }
+        });
+    } catch (error) {
+        console.error("❌ Update profile error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Lỗi khi cập nhật thông tin",
+            error: error.message
+        });
+    }
+};

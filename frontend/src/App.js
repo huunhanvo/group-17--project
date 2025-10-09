@@ -3,11 +3,12 @@ import UserList from "./components/UserList";
 import AddUser from "./components/AddUser";
 import SignUp from "./components/SignUp";
 import Login from "./components/Login";
+import Profile from "./components/Profile";
 import "./App.css";
 
 function App() {
   const [refreshKey, setRefreshKey] = useState(0);
-  const [currentView, setCurrentView] = useState("login"); // "login", "signup", "dashboard"
+  const [currentView, setCurrentView] = useState("login"); // "login", "signup", "dashboard", "profile"
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
 
@@ -77,7 +78,7 @@ function App() {
         </h1>
 
         {/* Header với thông tin user nếu đã đăng nhập */}
-        {user && currentView === "dashboard" && (
+        {user && (currentView === "dashboard" || currentView === "profile") && (
           <div style={{
             backgroundColor: "#e8f5e9",
             padding: "15px",
@@ -96,20 +97,50 @@ function App() {
                 {user.role === "admin" ? " 👑 Admin" : " 👨‍💼 User"}
               </p>
             </div>
-            <button
-              onClick={handleLogout}
-              style={{
-                padding: "10px 20px",
-                backgroundColor: "#f44336",
-                color: "white",
-                border: "none",
-                borderRadius: "5px",
-                cursor: "pointer",
-                fontWeight: "bold"
-              }}
-            >
-              🚪 Đăng xuất
-            </button>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button
+                onClick={() => setCurrentView("dashboard")}
+                style={{
+                  padding: "10px 20px",
+                  backgroundColor: currentView === "dashboard" ? "#4CAF50" : "#2196F3",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "5px",
+                  cursor: "pointer",
+                  fontWeight: "bold"
+                }}
+              >
+                🏠 Dashboard
+              </button>
+              <button
+                onClick={() => setCurrentView("profile")}
+                style={{
+                  padding: "10px 20px",
+                  backgroundColor: currentView === "profile" ? "#FF9800" : "#2196F3",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "5px",
+                  cursor: "pointer",
+                  fontWeight: "bold"
+                }}
+              >
+                👤 Profile
+              </button>
+              <button
+                onClick={handleLogout}
+                style={{
+                  padding: "10px 20px",
+                  backgroundColor: "#f44336",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "5px",
+                  cursor: "pointer",
+                  fontWeight: "bold"
+                }}
+              >
+                🚪 Đăng xuất
+              </button>
+            </div>
           </div>
         )}
 
@@ -168,6 +199,10 @@ function App() {
               <UserList refresh={refreshKey} />
             </>
           )}
+
+          {currentView === "profile" && (
+            <Profile />
+          )}
         </div>
 
         <footer style={{
@@ -177,8 +212,8 @@ function App() {
           color: "#666",
           borderTop: "1px solid #ddd"
         }}>
-          <p>📚 Buổi 5 - Ứng dụng hoàn chỉnh với Authentication</p>
-          <p>✅ Hoạt động 1: Đăng ký, Đăng nhập, Đăng xuất</p>
+          <p>📚 Buổi 5 - Ứng dụng hoàn chỉnh với Authentication & User Management</p>
+          <p>✅ Hoạt động 2: Quản lý thông tin cá nhân (Profile)</p>
         </footer>
       </div>
     </div>
