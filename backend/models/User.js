@@ -4,16 +4,16 @@ const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 
 const userSchema = new mongoose.Schema({
-    name: { 
-        type: String, 
-        required: [true, "Tên không được để trống"], 
+    name: {
+        type: String,
+        required: [true, "Tên không được để trống"],
         trim: true,
         minlength: [3, "Tên phải có ít nhất 3 ký tự"]
     },
-    email: { 
-        type: String, 
-        required: [true, "Email không được để trống"], 
-        unique: true, 
+    email: {
+        type: String,
+        required: [true, "Email không được để trống"],
+        unique: true,
         trim: true,
         lowercase: true,
         match: [/^\S+@\S+\.\S+$/, "Email không hợp lệ"]
@@ -26,7 +26,7 @@ const userSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ["user", "admin"],
+        enum: ["user", "moderator", "admin"],
         default: "user"
     },
     avatar: {
@@ -44,23 +44,23 @@ const userSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Hash password trước khi lưu vào database
-userSchema.pre("save", async function(next) {
+userSchema.pre("save", async function (next) {
     if (!this.isModified("password")) {
         return next();
     }
-    
+
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
     next();
 });
 
 // Method so sánh password
-userSchema.methods.comparePassword = async function(enteredPassword) {
+userSchema.methods.comparePassword = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };
 
 // Method tạo reset password token
-userSchema.methods.getResetPasswordToken = function() {
+userSchema.methods.getResetPasswordToken = function () {
     // Tạo token ngẫu nhiên
     const resetToken = crypto.randomBytes(20).toString("hex");
 

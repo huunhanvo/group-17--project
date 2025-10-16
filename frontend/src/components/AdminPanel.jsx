@@ -1,6 +1,5 @@
-// components/AdminPanel.jsx
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React, { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
 
 function AdminPanel() {
   const [users, setUsers] = useState([]);
@@ -10,11 +9,7 @@ function AdminPanel() {
 
   const token = localStorage.getItem("token");
 
-  useEffect(() => {
-    fetchAllUsers();
-  }, []);
-
-  const fetchAllUsers = async () => {
+  const fetchAllUsers = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -36,7 +31,11 @@ function AdminPanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    fetchAllUsers();
+  }, [fetchAllUsers]);
 
   const handleDeleteUser = async (userId, userName) => {
     const confirmDelete = window.confirm(

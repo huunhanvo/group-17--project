@@ -5,10 +5,13 @@ import SignUp from "./components/SignUp";
 import Login from "./components/Login";
 import Profile from "./components/Profile";
 import AdminPanel from "./components/AdminPanel";
+import ModeratorPanel from "./components/ModeratorPanel";
 import ForgotPassword from "./components/ForgotPassword";
 import ResetPassword from "./components/ResetPassword";
 import NotificationCenter from "./components/NotificationCenter";
 import OnlineUsers from "./components/OnlineUsers";
+import { RoleBadge } from "./components/RoleGuard";
+import { hasPermission } from "./utils/roleUtils";
 import { SocketProvider } from "./context/SocketContext";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -16,7 +19,7 @@ import "./App.css";
 
 function App() {
   const [refreshKey, setRefreshKey] = useState(0);
-  const [currentView, setCurrentView] = useState("login"); // "login", "signup", "dashboard", "profile", "admin", "forgot-password", "reset-password"
+  const [currentView, setCurrentView] = useState("login"); // "login", "signup", "dashboard", "profile", "admin", "moderator", "forgot-password", "reset-password"
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
 
@@ -101,9 +104,9 @@ function App() {
                 <p style={{ margin: 0, fontWeight: "bold" }}>
                   👤 Xin chào, {user.name}
                 </p>
-                <p style={{ margin: "5px 0 0 0", fontSize: "14px", color: "#666" }}>
+                <p style={{ margin: "5px 0 0 0", fontSize: "14px", color: "#666", display: "flex", alignItems: "center", gap: "10px" }}>
                   📧 {user.email} |
-                  {user.role === "admin" ? " 👑 Admin" : " 👨‍💼 User"}
+                  <RoleBadge role={user.role} size="small" />
                 </p>
               </div>
               <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
@@ -142,8 +145,26 @@ function App() {
                   👤 Profile
                 </button>
 
+                {/* Nút Moderator cho moderator và admin */}
+                {hasPermission(user.role, 'VIEW_MODERATOR_PANEL') && (
+                  <button
+                    onClick={() => setCurrentView("moderator")}
+                    style={{
+                      padding: "10px 20px",
+                      backgroundColor: currentView === "moderator" ? "#FF9800" : "#2196F3",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "5px",
+                      cursor: "pointer",
+                      fontWeight: "bold"
+                    }}
+                  >
+                    ⭐ Moderator
+                  </button>
+                )}
+
                 {/* Chỉ hiển thị nút Admin nếu user có role admin */}
-                {user.role === "admin" && (
+                {hasPermission(user.role, 'VIEW_ADMIN_PANEL') && (
                   <button
                     onClick={() => setCurrentView("admin")}
                     style={{
@@ -253,7 +274,11 @@ function App() {
               <Profile />
             )}
 
-            {currentView === "admin" && user.role === "admin" && (
+            {currentView === "moderator" && hasPermission(user?.role, 'VIEW_MODERATOR_PANEL') && (
+              <ModeratorPanel />
+            )}
+
+            {currentView === "admin" && hasPermission(user?.role, 'VIEW_ADMIN_PANEL') && (
               <AdminPanel />
             )}            {currentView === "forgot-password" && (
               <>
