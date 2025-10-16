@@ -1,6 +1,6 @@
 // components/SignUp.jsx
 import React, { useState } from "react";
-import axios from "axios";
+import { authAPI } from "../services/api";
 
 function SignUp({ onSignUpSuccess }) {
   const [formData, setFormData] = useState({

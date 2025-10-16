@@ -1,12 +1,44 @@
 // controllers/authController.js
 const User = require("../models/User");
+const RefreshToken = require("../models/RefreshToken");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
+const { notifyAdmins } = require("../socket/socketServer");
 
-// Helper function: Generate JWT Token
-const generateToken = (id) => {
+// Helper function: Generate Access Token (short-lived)
+const generateAccessToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET || "your_jwt_secret_key_2024", {
-        expiresIn: "30d"  // Token hết hạn sau 30 ngày
+        expiresIn: "15m"  // Access token hết hạn sau 15 phút
     });
+};
+
+// Helper function: Generate Refresh Token (long-lived)
+const generateRefreshToken = () => {
+    return crypto.randomBytes(40).toString('hex');
+};
+
+// Helper function: Create and save refresh token
+const createRefreshToken = async (userId, deviceInfo = '', ipAddress = '') => {
+    const token = generateRefreshToken();
+
+    const refreshToken = new RefreshToken({
+        token,
+        userId,
+        deviceInfo,
+        ipAddress,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+    });
+
+    await refreshToken.save();
+    return token;
+};
+
+// Helper function: Generate both tokens
+const generateTokens = async (userId, deviceInfo = '', ipAddress = '') => {
+    const accessToken = generateAccessToken(userId);
+    const refreshToken = await createRefreshToken(userId, deviceInfo, ipAddress);
+
+    return { accessToken, refreshToken };
 };
 
 // @desc    Đăng ký tài khoản mới
@@ -41,13 +73,25 @@ exports.signup = async (req, res) => {
             role: role || "user"  // Mặc định là user
         });
 
-        // Tạo token
-        const token = generateToken(user._id);
+        // Tạo access token và refresh token
+        const deviceInfo = req.get('User-Agent') || '';
+        const ipAddress = req.ip || req.connection.remoteAddress || '';
+        const tokens = await generateTokens(user._id, deviceInfo, ipAddress);
+
+        // Notify admins về user mới đăng ký
+        notifyAdmins('newUserRegistered', {
+            userId: user._id,
+            userName: user.name,
+            userEmail: user.email,
+            userRole: user.role,
+            message: `Người dùng mới đăng ký: ${user.name} (${user.email})`
+        });
 
         res.status(201).json({
             success: true,
             message: "Đăng ký thành công",
-            token,
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
             user: {
                 _id: user._id,
                 name: user.name,
@@ -83,7 +127,7 @@ exports.login = async (req, res) => {
 
         // Tìm user (bao gồm cả password)
         const user = await User.findOne({ email }).select("+password");
-        
+
         if (!user) {
             return res.status(401).json({
                 success: false,
@@ -93,7 +137,7 @@ exports.login = async (req, res) => {
 
         // Kiểm tra password
         const isPasswordMatch = await user.comparePassword(password);
-        
+
         if (!isPasswordMatch) {
             return res.status(401).json({
                 success: false,
@@ -101,13 +145,19 @@ exports.login = async (req, res) => {
             });
         }
 
-        // Tạo token
-        const token = generateToken(user._id);
+        // Cleanup expired tokens for this user
+        await RefreshToken.cleanupExpiredTokens(user._id);
+
+        // Tạo access token và refresh token
+        const deviceInfo = req.get('User-Agent') || '';
+        const ipAddress = req.ip || req.connection.remoteAddress || '';
+        const tokens = await generateTokens(user._id, deviceInfo, ipAddress);
 
         res.status(200).json({
             success: true,
             message: "Đăng nhập thành công",
-            token,
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
             user: {
                 _id: user._id,
                 name: user.name,
@@ -126,14 +176,116 @@ exports.login = async (req, res) => {
     }
 };
 
-// @desc    Đăng xuất (client-side sẽ xóa token)
+// @desc    Đăng xuất và revoke refresh token
 // @route   POST /auth/logout
+// @access  Private
+exports.logout = async (req, res) => {
+    try {
+        const { refreshToken } = req.body;
+
+        if (refreshToken) {
+            // Revoke the specific refresh token
+            await RefreshToken.findOneAndUpdate(
+                { token: refreshToken },
+                { isRevoked: true }
+            );
+        }
+
+        // If user is authenticated, revoke all tokens for this user
+        if (req.user) {
+            await RefreshToken.revokeAllTokensForUser(req.user._id);
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Đăng xuất thành công. Tất cả tokens đã được revoke."
+        });
+    } catch (error) {
+        console.error("❌ Logout error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Lỗi server khi đăng xuất",
+            error: error.message
+        });
+    }
+};
+
+// @desc    Refresh access token using refresh token
+// @route   POST /auth/refresh
 // @access  Public
-exports.logout = (req, res) => {
-    res.status(200).json({
-        success: true,
-        message: "Đăng xuất thành công. Vui lòng xóa token ở client."
-    });
+exports.refreshToken = async (req, res) => {
+    try {
+        const { refreshToken } = req.body;
+
+        if (!refreshToken) {
+            return res.status(401).json({
+                success: false,
+                message: "Refresh token không được cung cấp"
+            });
+        }
+
+        // Find refresh token in database
+        const tokenDoc = await RefreshToken.findOne({
+            token: refreshToken
+        }).populate('userId');
+
+        if (!tokenDoc) {
+            return res.status(401).json({
+                success: false,
+                message: "Refresh token không hợp lệ"
+            });
+        }
+
+        // Check if token is valid
+        if (!tokenDoc.isValid()) {
+            return res.status(401).json({
+                success: false,
+                message: "Refresh token đã hết hạn hoặc bị revoke"
+            });
+        }
+
+        // Check if user still exists
+        const user = await User.findById(tokenDoc.userId);
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: "User không tồn tại"
+            });
+        }
+
+        // Generate new access token
+        const newAccessToken = generateAccessToken(user._id);
+
+        // Optionally generate new refresh token (rotate refresh tokens)
+        const deviceInfo = req.get('User-Agent') || '';
+        const ipAddress = req.ip || req.connection.remoteAddress || '';
+        const newRefreshToken = await createRefreshToken(user._id, deviceInfo, ipAddress);
+
+        // Revoke the old refresh token
+        tokenDoc.isRevoked = true;
+        await tokenDoc.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Token đã được refresh thành công",
+            accessToken: newAccessToken,
+            refreshToken: newRefreshToken,
+            user: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                avatar: user.avatar
+            }
+        });
+    } catch (error) {
+        console.error("❌ Refresh token error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Lỗi server khi refresh token",
+            error: error.message
+        });
+    }
 };
 
 // @desc    Lấy thông tin user hiện tại (từ token)

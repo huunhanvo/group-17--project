@@ -1,6 +1,6 @@
 // components/Login.jsx
 import React, { useState } from "react";
-import axios from "axios";
+import { authAPI } from "../services/api";
 
 function Login({ onLoginSuccess }) {
   const [formData, setFormData] = useState({
@@ -35,17 +35,13 @@ function Login({ onLoginSuccess }) {
 
     try {
       setLoading(true);
-      const response = await axios.post("http://localhost:5000/auth/login", {
+      const response = await authAPI.login({
         email: email.trim(),
         password
       });
 
-      if (response.data.success) {
-        setMessage("✅ " + response.data.message);
-
-        // Lưu token và user info vào localStorage
-        localStorage.setItem("token", response.data.token);
-        localStorage.setItem("user", JSON.stringify(response.data.user));
+      if (response.success) {
+        setMessage("✅ " + response.message);
 
         // Reset form
         setFormData({ email: "", password: "" });
@@ -53,7 +49,7 @@ function Login({ onLoginSuccess }) {
         // Callback để chuyển sang trang chính
         setTimeout(() => {
           if (onLoginSuccess) {
-            onLoginSuccess(response.data.user, response.data.token);
+            onLoginSuccess(response.user, response.accessToken);
           }
         }, 1000);
       }
