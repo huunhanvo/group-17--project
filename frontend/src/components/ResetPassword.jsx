@@ -39,8 +39,8 @@ function ResetPassword({ onBackToLogin }) {
     try {
       setLoading(true);
       const response = await axios.post(
-        `http://localhost:5000/auth/reset-password/${resetToken.trim()}`,
-        { newPassword }
+        `http://localhost:3000/password/reset/${resetToken.trim()}`,
+        { password: newPassword }
       );
 
       if (response.data.success) {

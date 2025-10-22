@@ -27,13 +27,13 @@ function ForgotPassword({ onBackToLogin }) {
 
     try {
       setLoading(true);
-      const response = await axios.post("http://localhost:5000/auth/forgot-password", {
+      const response = await axios.post("http://localhost:3000/password/forgot", {
         email: email.trim()
       });
 
       if (response.data.success) {
         setMessage("✅ " + response.data.message);
-        setResetToken(response.data.resetToken);
+        setEmail("");
       }
     } catch (err) {
       console.error("Forgot password error:", err);
