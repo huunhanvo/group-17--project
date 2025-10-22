@@ -29,10 +29,12 @@ const io = initializeSocket(server);
 const userRoutes = require("./routes/user");
 const authRoutes = require("./routes/auth");
 const socketRoutes = require("./routes/socket");
+const avatarRoutes = require("./routes/avatar");
 
 app.use("/users", userRoutes);
 app.use("/auth", authRoutes);  // Auth routes: /auth/signup, /auth/login, /auth/logout
 app.use("/socket", socketRoutes);  // Socket routes: /socket/online-count, /socket/system-announcement
+app.use("/avatar", avatarRoutes);  // Avatar routes: /avatar/upload, /avatar/delete
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {

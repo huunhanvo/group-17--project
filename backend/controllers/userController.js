@@ -1,5 +1,6 @@
 // controllers/userController.js
 const User = require("../models/User");
+const { uploadToCloudinary, deleteFromCloudinary } = require("../config/cloudinary");
 
 // GET: Lấy danh sách tất cả người dùng (Admin only)
 exports.getAllUsers = async (req, res) => {
@@ -254,5 +255,134 @@ exports.createUser = async (req, res) => {
         res.status(201).json(savedUser);
     } catch (err) {
         res.status(500).json({ error: "Lỗi server: " + err.message });
+    }
+};
+
+// POST: Upload avatar
+exports.uploadAvatar = async (req, res) => {
+    try {
+        // Kiểm tra có file không
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: "Vui lòng chọn file ảnh"
+            });
+        }
+
+        const userId = req.user._id;
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "Không tìm thấy user"
+            });
+        }
+
+        // Nếu user đã có avatar trên Cloudinary, xóa ảnh cũ
+        if (user.avatar && user.avatar.includes('cloudinary')) {
+            try {
+                // Lấy public_id từ URL cloudinary
+                const urlParts = user.avatar.split('/');
+                const publicIdWithExt = urlParts[urlParts.length - 1];
+                const publicId = `avatars/${publicIdWithExt.split('.')[0]}`;
+                
+                await deleteFromCloudinary(publicId);
+                console.log('✅ Đã xóa avatar cũ trên Cloudinary');
+            } catch (error) {
+                console.error('⚠️  Lỗi khi xóa avatar cũ:', error.message);
+                // Không return error, tiếp tục upload ảnh mới
+            }
+        }
+
+        // Upload ảnh lên Cloudinary
+        const result = await uploadToCloudinary(req.file.buffer, 'avatars');
+
+        // Cập nhật URL avatar trong database
+        user.avatar = result.secure_url;
+        await user.save();
+
+        console.log('✅ Avatar uploaded successfully:', result.secure_url);
+
+        res.status(200).json({
+            success: true,
+            message: "Upload avatar thành công",
+            avatar: result.secure_url,
+            user: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                avatar: user.avatar
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Upload avatar error:', error);
+        res.status(500).json({
+            success: false,
+            message: "Lỗi khi upload avatar",
+            error: error.message
+        });
+    }
+};
+
+// DELETE: Xóa avatar
+exports.deleteAvatar = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "Không tìm thấy user"
+            });
+        }
+
+        if (!user.avatar) {
+            return res.status(400).json({
+                success: false,
+                message: "User chưa có avatar"
+            });
+        }
+
+        // Xóa avatar trên Cloudinary
+        if (user.avatar.includes('cloudinary')) {
+            try {
+                const urlParts = user.avatar.split('/');
+                const publicIdWithExt = urlParts[urlParts.length - 1];
+                const publicId = `avatars/${publicIdWithExt.split('.')[0]}`;
+                
+                await deleteFromCloudinary(publicId);
+                console.log('✅ Đã xóa avatar trên Cloudinary');
+            } catch (error) {
+                console.error('⚠️  Lỗi khi xóa avatar:', error.message);
+            }
+        }
+
+        // Xóa URL avatar trong database
+        user.avatar = "";
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Đã xóa avatar",
+            user: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                avatar: user.avatar
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Delete avatar error:', error);
+        res.status(500).json({
+            success: false,
+            message: "Lỗi khi xóa avatar",
+            error: error.message
+        });
     }
 };

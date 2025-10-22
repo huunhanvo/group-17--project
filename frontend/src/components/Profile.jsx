@@ -103,34 +103,81 @@ function Profile() {
       setError("");
       setMessage("");
 
-      // Chuyển file thành base64
-      const reader = new FileReader();
-      reader.readAsDataURL(avatarFile);
-      reader.onloadend = async () => {
-        const base64String = reader.result;
+      // Tạo FormData để upload file
+      const formData = new FormData();
+      formData.append('avatar', avatarFile);
 
-        const response = await axios.post(
-          "http://localhost:5000/auth/upload-avatar",
-          { avatar: base64String },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json"
-            }
+      const response = await axios.post(
+        "http://localhost:3000/avatar/upload",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data"
           }
-        );
-
-        if (response.data.success) {
-          setMessage("✅ Upload avatar thành công!");
-          // Cập nhật lại thông tin user
-          await fetchUserProfile();
-          setAvatarFile(null);
-          setAvatarPreview(null);
         }
-      };
+      );
+
+      if (response.data.success) {
+        setMessage("✅ Upload avatar thành công!");
+        
+        // Cập nhật localStorage
+        const savedUser = JSON.parse(localStorage.getItem("user"));
+        localStorage.setItem("user", JSON.stringify({
+          ...savedUser,
+          avatar: response.data.avatar
+        }));
+        
+        // Cập nhật lại thông tin user
+        await fetchUserProfile();
+        setAvatarFile(null);
+        setAvatarPreview(null);
+      }
     } catch (err) {
       console.error("Error uploading avatar:", err);
       setError(err.response?.data?.message || "❌ Lỗi upload avatar");
+    } finally {
+      setAvatarLoading(false);
+    }
+  };
+
+  // Delete avatar
+  const handleAvatarDelete = async () => {
+    if (!window.confirm("Bạn có chắc muốn xóa avatar?")) {
+      return;
+    }
+
+    try {
+      setAvatarLoading(true);
+      setError("");
+      setMessage("");
+
+      const response = await axios.delete(
+        "http://localhost:3000/avatar/delete",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      if (response.data.success) {
+        setMessage("✅ Đã xóa avatar");
+        
+        // Cập nhật localStorage
+        const savedUser = JSON.parse(localStorage.getItem("user"));
+        localStorage.setItem("user", JSON.stringify({
+          ...savedUser,
+          avatar: ""
+        }));
+        
+        // Cập nhật lại thông tin user
+        await fetchUserProfile();
+        setAvatarPreview(null);
+      }
+    } catch (err) {
+      console.error("Error deleting avatar:", err);
+      setError(err.response?.data?.message || "❌ Lỗi xóa avatar");
     } finally {
       setAvatarLoading(false);
     }
@@ -423,11 +470,34 @@ function Profile() {
                 borderRadius: "5px",
                 fontSize: "14px",
                 fontWeight: "bold",
-                cursor: (!avatarFile || avatarLoading) ? "not-allowed" : "pointer"
+                cursor: (!avatarFile || avatarLoading) ? "not-allowed" : "pointer",
+                marginBottom: "10px"
               }}
             >
               {avatarLoading ? "⏳ Đang upload..." : "⬆️ Upload Avatar"}
             </button>
+
+            {/* Delete Avatar Button */}
+            {user.avatar && (
+              <button
+                type="button"
+                onClick={handleAvatarDelete}
+                disabled={avatarLoading}
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                  backgroundColor: avatarLoading ? "#ccc" : "#f44336",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "5px",
+                  fontSize: "14px",
+                  fontWeight: "bold",
+                  cursor: avatarLoading ? "not-allowed" : "pointer"
+                }}
+              >
+                🗑️ Xóa Avatar
+              </button>
+            )}
 
             <p style={{ 
               fontSize: "12px", 
