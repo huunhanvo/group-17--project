@@ -3,10 +3,11 @@ const express = require("express");
 const router = express.Router();
 const authController = require("../controllers/authController");
 const { protect } = require("../middleware/authMiddleware");
+const { loginLimiter, signupLimiter } = require("../middleware/rateLimiter");
 
-// Public routes
-router.post("/signup", authController.signup);
-router.post("/login", authController.login);
+// Public routes with rate limiting
+router.post("/signup", signupLimiter, authController.signup);
+router.post("/login", loginLimiter, authController.login);
 router.post("/logout", authController.logout);
 router.post("/refresh", authController.refreshToken);
 router.post("/forgot-password", authController.forgotPassword);

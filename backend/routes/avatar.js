@@ -4,11 +4,13 @@ const router = express.Router();
 const userController = require("../controllers/userController");
 const { protect } = require("../middleware/authMiddleware");
 const { upload, resizeAvatar } = require("../middleware/uploadMiddleware");
+const { uploadLimiter } = require("../middleware/rateLimiter");
 
-// POST: Upload avatar (yêu cầu đăng nhập)
+// POST: Upload avatar (yêu cầu đăng nhập + rate limit)
 // Multer xử lý upload -> Sharp resize -> Cloudinary
 router.post(
     "/upload",
+    uploadLimiter,
     protect,
     upload.single('avatar'),
     resizeAvatar,
