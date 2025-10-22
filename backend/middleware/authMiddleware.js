@@ -54,3 +54,58 @@ exports.adminOnly = (req, res, next) => {
         });
     }
 };
+
+// Middleware kiểm tra nhiều roles (RBAC nâng cao)
+exports.checkRole = (...roles) => {
+    return (req, res, next) => {
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                message: "Vui lòng đăng nhập để truy cập"
+            });
+        }
+
+        if (!roles.includes(req.user.role)) {
+            return res.status(403).json({
+                success: false,
+                message: `Quyền truy cập bị từ chối. Yêu cầu role: ${roles.join(" hoặc ")}. Role hiện tại: ${req.user.role}`
+            });
+        }
+
+        next();
+    };
+};
+
+// Middleware kiểm tra Admin hoặc Moderator
+exports.adminOrModerator = (req, res, next) => {
+    if (req.user && (req.user.role === "admin" || req.user.role === "moderator")) {
+        next();
+    } else {
+        return res.status(403).json({
+            success: false,
+            message: "Chỉ Admin hoặc Moderator mới có quyền truy cập"
+        });
+    }
+};
+
+// Middleware cho phép user truy cập tài nguyên của chính mình HOẶC admin
+exports.selfOrAdmin = (req, res, next) => {
+    const requestedUserId = req.params.id || req.params.userId;
+    
+    if (!req.user) {
+        return res.status(401).json({
+            success: false,
+            message: "Vui lòng đăng nhập"
+        });
+    }
+
+    // Cho phép nếu là chính user đó hoặc là admin
+    if (req.user._id.toString() === requestedUserId || req.user.role === "admin") {
+        next();
+    } else {
+        return res.status(403).json({
+            success: false,
+            message: "Bạn chỉ có thể truy cập tài nguyên của chính mình"
+        });
+    }
+};

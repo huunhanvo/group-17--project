@@ -5,6 +5,7 @@ import SignUp from "./components/SignUp";
 import Login from "./components/Login";
 import Profile from "./components/Profile";
 import AdminPanel from "./components/AdminPanel";
+import ModeratorPanel from "./components/ModeratorPanel";
 import ForgotPassword from "./components/ForgotPassword";
 import ResetPassword from "./components/ResetPassword";
 import NotificationCenter from "./components/NotificationCenter";
@@ -16,7 +17,7 @@ import "./App.css";
 
 function App() {
   const [refreshKey, setRefreshKey] = useState(0);
-  const [currentView, setCurrentView] = useState("login"); // "login", "signup", "dashboard", "profile", "admin", "forgot-password", "reset-password"
+  const [currentView, setCurrentView] = useState("login"); // "login", "signup", "dashboard", "profile", "admin", "moderator", "forgot-password", "reset-password"
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
 
@@ -87,7 +88,7 @@ function App() {
           </h1>
 
           {/* Header với thông tin user nếu đã đăng nhập */}
-          {user && (currentView === "dashboard" || currentView === "profile" || currentView === "admin") && (
+          {user && (currentView === "dashboard" || currentView === "profile" || currentView === "admin" || currentView === "moderator") && (
             <div style={{
               backgroundColor: "#e8f5e9",
               padding: "15px",
@@ -103,7 +104,9 @@ function App() {
                 </p>
                 <p style={{ margin: "5px 0 0 0", fontSize: "14px", color: "#666" }}>
                   📧 {user.email} |
-                  {user.role === "admin" ? " 👑 Admin" : " 👨‍💼 User"}
+                  {user.role === "admin" && " 👑 Admin"}
+                  {user.role === "moderator" && " 🛡️ Moderator"}
+                  {user.role === "user" && " 👨‍💼 User"}
                 </p>
               </div>
               <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
@@ -142,7 +145,7 @@ function App() {
                   👤 Profile
                 </button>
 
-                {/* Chỉ hiển thị nút Admin nếu user có role admin */}
+                {/* Hiển thị nút quản lý theo role */}
                 {user.role === "admin" && (
                   <button
                     onClick={() => setCurrentView("admin")}
@@ -156,7 +159,24 @@ function App() {
                       fontWeight: "bold"
                     }}
                   >
-                    👑 Admin
+                    👑 Admin Panel
+                  </button>
+                )}
+
+                {user.role === "moderator" && (
+                  <button
+                    onClick={() => setCurrentView("moderator")}
+                    style={{
+                      padding: "10px 20px",
+                      backgroundColor: currentView === "moderator" ? "#9C27B0" : "#2196F3",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "5px",
+                      cursor: "pointer",
+                      fontWeight: "bold"
+                    }}
+                  >
+                    🛡️ Moderator Panel
                   </button>
                 )}
 
@@ -255,7 +275,13 @@ function App() {
 
             {currentView === "admin" && user.role === "admin" && (
               <AdminPanel />
-            )}            {currentView === "forgot-password" && (
+            )}
+
+            {currentView === "moderator" && user.role === "moderator" && (
+              <ModeratorPanel />
+            )}
+
+            {currentView === "forgot-password" && (
               <>
                 <ForgotPassword />
                 <p style={{ textAlign: "center", marginTop: "15px" }}>
@@ -333,8 +359,8 @@ function App() {
             color: "#666",
             borderTop: "1px solid #ddd"
           }}>
-            <p>📚 Buổi 6 - User Management Advanced với Real-time Features</p>
-            <p>✅ Hoạt động 1: Real-time Notifications với Socket.IO</p>
+            <p>📚 Buổi 6 - User Management Advanced với RBAC</p>
+            <p>✅ Hoạt động 2: Role-Based Access Control (Admin, Moderator, User)</p>
           </footer>
         </div>
       </div>
