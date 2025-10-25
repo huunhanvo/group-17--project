@@ -47,11 +47,12 @@ const socketRoutes = require("./routes/socket");
 const avatarRoutes = require("./routes/avatar");
 const passwordRoutes = require("./routes/password");
 
-app.use("/users", userRoutes);
-app.use("/auth", authRoutes);  // Auth routes: /auth/signup, /auth/login, /auth/logout
-app.use("/socket", socketRoutes);  // Socket routes: /socket/online-count, /socket/system-announcement
-app.use("/avatar", avatarRoutes);  // Avatar routes: /avatar/upload, /avatar/delete
-app.use("/password", passwordRoutes);  // Password routes: /password/forgot, /password/reset/:token
+// API routes với prefix /api
+app.use("/api/users", userRoutes);
+app.use("/api/auth", authRoutes);  // Auth routes: /api/auth/signup, /api/auth/login, /api/auth/logout
+app.use("/api/socket", socketRoutes);  // Socket routes: /api/socket/online-count, /api/socket/system-announcement
+app.use("/api/avatar", avatarRoutes);  // Avatar routes: /api/avatar/upload, /api/avatar/delete
+app.use("/api/password", passwordRoutes);  // Password routes: /api/password/forgot, /api/password/reset/:token
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {

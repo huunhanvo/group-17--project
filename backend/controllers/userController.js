@@ -237,26 +237,61 @@ exports.getUsers = async (req, res) => {
 // POST: Thêm người dùng mới
 exports.createUser = async (req, res) => {
     try {
-        const { name, email } = req.body;
+        const { name, email, password, role } = req.body;
 
         // Kiểm tra đầu vào
-        if (!name || !email) {
-            return res.status(400).json({ error: "Name và Email là bắt buộc" });
+        if (!name || !email || !password) {
+            return res.status(400).json({ 
+                success: false,
+                message: "Name, Email và Password là bắt buộc" 
+            });
+        }
+
+        // Validate password
+        if (password.length < 6) {
+            return res.status(400).json({
+                success: false,
+                message: "Password phải có ít nhất 6 ký tự"
+            });
         }
 
         // Kiểm tra email đã tồn tại chưa
         const existing = await User.findOne({ email });
         if (existing) {
-            return res.status(400).json({ error: "Email đã tồn tại" });
+            return res.status(400).json({ 
+                success: false,
+                message: "Email đã tồn tại" 
+            });
         }
 
         // Tạo mới user
-        const newUser = new User({ name, email });
+        const newUser = new User({ 
+            name, 
+            email, 
+            password,  // Password sẽ tự động được hash nhờ pre-save hook
+            role: role || "user"  // Mặc định là "user"
+        });
         const savedUser = await newUser.save();
 
-        res.status(201).json(savedUser);
+        res.status(201).json({
+            success: true,
+            message: "Tạo user thành công",
+            user: {
+                _id: savedUser._id,
+                name: savedUser.name,
+                email: savedUser.email,
+                role: savedUser.role,
+                avatar: savedUser.avatar,
+                createdAt: savedUser.createdAt
+            }
+        });
     } catch (err) {
-        res.status(500).json({ error: "Lỗi server: " + err.message });
+        console.error("❌ Create user error:", err);
+        res.status(500).json({ 
+            success: false,
+            message: "Lỗi server",
+            error: err.message 
+        });
     }
 };
 

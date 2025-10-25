@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Base URL for API
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'http://localhost:3000';
 
 // Create axios instance
 const api = axios.create({
@@ -160,7 +160,7 @@ const isAuthenticated = () => {
 const authAPI = {
     // Signup
     signup: async (userData) => {
-        const response = await api.post('/auth/signup', userData);
+        const response = await api.post('/api/auth/signup', userData);
         const { accessToken: newAccessToken, refreshToken: newRefreshToken, user } = response.data;
         setTokens(newAccessToken, newRefreshToken, user);
         return response.data;
@@ -168,7 +168,7 @@ const authAPI = {
 
     // Login
     login: async (credentials) => {
-        const response = await api.post('/auth/login', credentials);
+        const response = await api.post('/api/auth/login', credentials);
         const { accessToken: newAccessToken, refreshToken: newRefreshToken, user } = response.data;
         setTokens(newAccessToken, newRefreshToken, user);
         return response.data;
@@ -178,7 +178,7 @@ const authAPI = {
     logout: async () => {
         try {
             if (refreshToken) {
-                await api.post('/auth/logout', { refreshToken });
+                await api.post('/api/auth/logout', { refreshToken });
             }
         } catch (error) {
             console.error('Logout error:', error);
@@ -189,31 +189,31 @@ const authAPI = {
 
     // Get current user
     getMe: async () => {
-        const response = await api.get('/auth/me');
+        const response = await api.get('/api/auth/me');
         return response.data;
     },
 
     // Update profile
     updateProfile: async (profileData) => {
-        const response = await api.put('/auth/profile', profileData);
+        const response = await api.put('/api/auth/profile', profileData);
         return response.data;
     },
 
     // Upload avatar
     uploadAvatar: async (avatarData) => {
-        const response = await api.post('/auth/upload-avatar', avatarData);
+        const response = await api.post('/api/auth/upload-avatar', avatarData);
         return response.data;
     },
 
     // Forgot password
     forgotPassword: async (email) => {
-        const response = await api.post('/auth/forgot-password', { email });
+        const response = await api.post('/api/auth/forgot-password', { email });
         return response.data;
     },
 
     // Reset password
     resetPassword: async (token, newPassword) => {
-        const response = await api.post(`/auth/reset-password/${token}`, { newPassword });
+        const response = await api.post(`/api/auth/reset-password/${token}`, { newPassword });
         return response.data;
     },
 
@@ -223,7 +223,7 @@ const authAPI = {
             throw new Error('No refresh token available');
         }
 
-        const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
+        const response = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {
             refreshToken: refreshToken
         });
 
@@ -238,19 +238,19 @@ const authAPI = {
 const userAPI = {
     // Get all users (admin only)
     getAllUsers: async () => {
-        const response = await api.get('/users');
+        const response = await api.get('/api/users');
         return response.data;
     },
 
     // Delete user (admin only)
     deleteUser: async (userId) => {
-        const response = await api.delete(`/users/${userId}`);
+        const response = await api.delete(`/api/users/${userId}`);
         return response.data;
     },
 
     // Add user
     addUser: async (userData) => {
-        const response = await api.post('/users', userData);
+        const response = await api.post('/api/users', userData);
         return response.data;
     }
 };
@@ -259,13 +259,13 @@ const userAPI = {
 const socketAPI = {
     // Get online users count
     getOnlineCount: async () => {
-        const response = await api.get('/socket/online-count');
+        const response = await api.get('/api/socket/online-count');
         return response.data;
     },
 
     // Send system announcement (admin only)
     sendAnnouncement: async (message, type = 'info') => {
-        const response = await api.post('/socket/system-announcement', { message, type });
+        const response = await api.post('/api/socket/system-announcement', { message, type });
         return response.data;
     }
 };

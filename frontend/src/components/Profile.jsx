@@ -1,5 +1,6 @@
 // components/Profile.jsx
 import React, { useState, useEffect } from "react";
+import { authAPI } from "../services/api";
 import axios from "axios";
 
 function Profile() {
@@ -26,7 +27,7 @@ function Profile() {
   const [avatarLoading, setAvatarLoading] = useState(false);
 
   // Lấy token từ localStorage
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("accessToken");
 
   // Lấy thông tin user khi component mount
   useEffect(() => {
@@ -36,17 +37,13 @@ function Profile() {
   const fetchUserProfile = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://localhost:5000/auth/me", {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      const response = await authAPI.getMe();
 
-      if (response.data.success) {
-        setUser(response.data.user);
+      if (response.success) {
+        setUser(response.user);
         setFormData({
-          name: response.data.user.name,
-          email: response.data.user.email,
+          name: response.user.name,
+          email: response.user.email,
           currentPassword: "",
           newPassword: "",
           confirmNewPassword: ""
@@ -108,7 +105,7 @@ function Profile() {
       formData.append('avatar', avatarFile);
 
       const response = await axios.post(
-        "http://localhost:3000/avatar/upload",
+        "http://localhost:3000/api/avatar/upload",
         formData,
         {
           headers: {
@@ -153,7 +150,7 @@ function Profile() {
       setMessage("");
 
       const response = await axios.delete(
-        "http://localhost:3000/avatar/delete",
+        "http://localhost:3000/api/avatar/delete",
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -232,7 +229,7 @@ function Profile() {
       }
 
       const response = await axios.put(
-        "http://localhost:5000/auth/profile",
+        "http://localhost:3000/api/auth/profile",
         updateData,
         {
           headers: {

@@ -148,10 +148,46 @@ Click **"Save"** (Ctrl + S)
 - Token sẽ tự động lưu vào các biến tương ứng
 
 #### 4.4. Test Refresh Token
-1. Sau khi login, copy refresh token từ cookie/response
-2. Mở **"Refresh Token"**
-3. Paste vào body
+
+**Bước 1: Lấy Refresh Token**
+1. Mở request **"Login - Admin"** (hoặc bất kỳ login nào)
+2. Click **"Send"**
+3. Xem response body bên dưới:
+   ```json
+   {
+     "success": true,
+     "message": "Đăng nhập thành công",
+     "accessToken": "eyJhbGc...",
+     "refreshToken": "a1b2c3d4e5f6...",  ← Copy dòng này
+     "user": {...}
+   }
+   ```
+4. **Copy giá trị của `refreshToken`** (dãy ký tự dài sau dấu `:`)
+
+**Bước 2: Test Refresh Token**
+1. Mở request **"Refresh Token"**
+2. Click tab **"Body"** → **"raw"** → **"JSON"**
+3. Paste refresh token vào:
+   ```json
+   {
+     "refreshToken": "a1b2c3d4e5f6..." ← Paste token ở đây
+   }
+   ```
 4. Click **"Send"**
+5. **Expected Response (200):**
+   ```json
+   {
+     "success": true,
+     "message": "Token đã được refresh thành công",
+     "accessToken": "eyJhbGc...",      ← Token mới
+     "refreshToken": "x9y8z7w6..."      ← Refresh token mới
+   }
+   ```
+
+**💡 Giải thích:**
+- **Access Token**: Dùng để gọi API (hết hạn sau 15 phút)
+- **Refresh Token**: Dùng để lấy access token mới (hết hạn sau 7 ngày)
+- Khi access token hết hạn, dùng refresh token để lấy cặp token mới
 
 ---
 

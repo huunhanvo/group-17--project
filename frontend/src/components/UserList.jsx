@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { userAPI } from "../services/api";
 
 const UserList = ({ refresh }) => {
   const [users, setUsers] = useState([]);
@@ -11,9 +11,12 @@ const UserList = ({ refresh }) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get("http://localhost:3000/users");
-      setUsers(response.data);
-      console.log("✅ Đã tải", response.data.length, "users từ MongoDB");
+      const response = await userAPI.getAllUsers();
+      
+      // API trả về { success: true, count: X, users: [...] }
+      const userList = response.users || [];
+      setUsers(userList);
+      console.log("✅ Đã tải", userList.length, "users từ MongoDB");
     } catch (err) {
       console.error("❌ Lỗi khi tải users:", err);
       setError("Không thể tải danh sách người dùng. Kiểm tra backend!");
