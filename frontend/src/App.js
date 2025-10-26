@@ -10,6 +10,7 @@ import ForgotPassword from "./components/ForgotPassword";
 import ResetPassword from "./components/ResetPassword";
 import NotificationCenter from "./components/NotificationCenter";
 import OnlineUsers from "./components/OnlineUsers";
+import MockActivityLogs from "./pages/MockActivityLogs";
 import { SocketProvider } from "./context/SocketContext";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -17,7 +18,7 @@ import "./App.css";
 
 function App() {
   const [refreshKey, setRefreshKey] = useState(0);
-  const [currentView, setCurrentView] = useState("login"); // "login", "signup", "dashboard", "profile", "admin", "moderator", "forgot-password", "reset-password"
+  const [currentView, setCurrentView] = useState("login"); // "login", "signup", "dashboard", "profile", "admin", "moderator", "forgot-password", "reset-password", "mock-logs"
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
 
@@ -88,7 +89,7 @@ function App() {
           </h1>
 
           {/* Header với thông tin user nếu đã đăng nhập */}
-          {user && (currentView === "dashboard" || currentView === "profile" || currentView === "admin" || currentView === "moderator") && (
+          {user && (currentView === "dashboard" || currentView === "profile" || currentView === "admin" || currentView === "moderator" || currentView === "mock-logs") && (
             <div style={{
               backgroundColor: "#e8f5e9",
               padding: "15px",
@@ -143,6 +144,22 @@ function App() {
                   }}
                 >
                   👤 Profile
+                </button>
+
+                {/* Nút Mock Activity Logs - Cho DEMO */}
+                <button
+                  onClick={() => setCurrentView("mock-logs")}
+                  style={{
+                    padding: "10px 20px",
+                    backgroundColor: currentView === "mock-logs" ? "#9C27B0" : "#673AB7",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "5px",
+                    cursor: "pointer",
+                    fontWeight: "bold"
+                  }}
+                >
+                  📊 Activity Logs
                 </button>
 
                 {/* Hiển thị nút quản lý theo role */}
@@ -279,6 +296,10 @@ function App() {
 
             {currentView === "moderator" && user.role === "moderator" && (
               <ModeratorPanel />
+            )}
+
+            {currentView === "mock-logs" && (
+              <MockActivityLogs />
             )}
 
             {currentView === "forgot-password" && (

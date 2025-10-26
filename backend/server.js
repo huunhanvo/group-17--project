@@ -11,8 +11,20 @@ require("dotenv").config();
 const app = express();
 const server = http.createServer(app);
 
+// CORS configuration - Allow both local and production domains
+const corsOptions = {
+  origin: [
+    'http://localhost:3001',
+    'http://localhost:3000',
+    'https://*.vercel.app',
+    process.env.FRONTEND_URL || 'http://localhost:3001'
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
 // middleware
-app.use(cors());
+app.use(cors(corsOptions));
 // Tăng giới hạn body size để upload ảnh base64 (default: 100kb → 50mb)
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
