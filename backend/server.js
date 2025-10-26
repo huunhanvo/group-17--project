@@ -23,11 +23,8 @@ app.use(morgan('combined', { stream: logger.stream }));
 // Apply rate limiter cho tất cả API routes
 app.use('/api', apiLimiter);
 
-// connect Mongo
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
+// connect Mongo (without deprecated options)
+mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log("✅ MongoDB connected");
     logger.info("MongoDB connected successfully");
@@ -40,12 +37,27 @@ mongoose.connect(process.env.MONGO_URI, {
 // Initialize Socket.IO after MongoDB connection
 const io = initializeSocket(server);
 
-// routes
-const userRoutes = require("./routes/user");
-const authRoutes = require("./routes/auth");
-const socketRoutes = require("./routes/socket");
-const avatarRoutes = require("./routes/avatar");
-const passwordRoutes = require("./routes/password");
+// routes - wrapped in try-catch to catch require errors
+let userRoutes, authRoutes, socketRoutes, avatarRoutes, passwordRoutes, logsRoutes;
+
+try {
+  console.log("📂 Loading routes...");
+  userRoutes = require("./routes/user");
+  console.log("✅ user routes loaded");
+  authRoutes = require("./routes/auth");
+  console.log("✅ auth routes loaded");
+  socketRoutes = require("./routes/socket");
+  console.log("✅ socket routes loaded");
+  avatarRoutes = require("./routes/avatar");
+  console.log("✅ avatar routes loaded");
+  passwordRoutes = require("./routes/password");
+  console.log("✅ password routes loaded");
+  logsRoutes = require("./routes/logs");
+  console.log("✅ logs routes loaded");
+} catch (err) {
+  console.error("❌ Error loading routes:", err);
+  process.exit(1);
+}
 
 // API routes với prefix /api
 app.use("/api/users", userRoutes);
@@ -53,10 +65,19 @@ app.use("/api/auth", authRoutes);  // Auth routes: /api/auth/signup, /api/auth/l
 app.use("/api/socket", socketRoutes);  // Socket routes: /api/socket/online-count, /api/socket/system-announcement
 app.use("/api/avatar", avatarRoutes);  // Avatar routes: /api/avatar/upload, /api/avatar/delete
 app.use("/api/password", passwordRoutes);  // Password routes: /api/password/forgot, /api/password/reset/:token
+app.use("/api/logs", logsRoutes);  // Activity Logs routes: /api/logs, /api/logs/user/:userId, /api/logs/stats
 
 const PORT = process.env.PORT || 3000;
+
+// Add error handling for server.listen()
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`🔌 Socket.IO ready for connections`);
   logger.info(`Server started on port ${PORT}`);
+}).on('error', (err) => {
+  console.error("❌ Server failed to start:", err);
+  if (err.code === 'EADDRINUSE') {
+    console.error(`❌ Port ${PORT} is already in use. Please use a different port.`);
+  }
+  process.exit(1);
 });

@@ -4,17 +4,20 @@ const refreshTokenSchema = new mongoose.Schema({
     token: {
         type: String,
         required: true,
-        unique: true
+        unique: true,
+        index: true  // Consolidate index declaration here
     },
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true
+        required: true,
+        index: true  // Consolidate index declaration here
     },
     expiresAt: {
         type: Date,
         required: true,
         default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+        // Removed index: true to avoid duplicate with TTL index below
     },
     isRevoked: {
         type: Boolean,
@@ -32,12 +35,7 @@ const refreshTokenSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Index for efficient queries
-refreshTokenSchema.index({ token: 1 });
-refreshTokenSchema.index({ userId: 1 });
-refreshTokenSchema.index({ expiresAt: 1 });
-
-// Remove expired tokens automatically
+// TTL index: Remove expired tokens automatically (no duplicate)
 refreshTokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 // Instance method to check if token is valid

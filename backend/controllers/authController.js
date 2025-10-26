@@ -4,6 +4,7 @@ const RefreshToken = require("../models/RefreshToken");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { notifyAdmins } = require("../socket/socketServer");
+const { logActivityManual, logFailedLogin } = require("../middleware/activityLogger");
 
 // Helper function: Generate Access Token (short-lived)
 const generateAccessToken = (id) => {
@@ -85,6 +86,16 @@ exports.signup = async (req, res) => {
             userEmail: user.email,
             userRole: user.role,
             message: `Người dùng mới đăng ký: ${user.name} (${user.email})`
+        });
+
+        // Log activity: signup thành công
+        await logActivityManual({
+            userId: user._id,
+            action: 'signup',
+            details: `User signed up: ${email}`,
+            ipAddress,
+            userAgent: deviceInfo,
+            status: 'success'
         });
 
         res.status(201).json({
