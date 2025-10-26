@@ -1,6 +1,6 @@
 // components/AdminPanel.jsx
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { userAPI } from "../services/api";
 
 function AdminPanel() {
   const [users, setUsers] = useState([]);
@@ -11,7 +11,6 @@ function AdminPanel() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [newRole, setNewRole] = useState("");
 
-  const token = localStorage.getItem("token");
   const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
 
   useEffect(() => {
@@ -24,20 +23,33 @@ function AdminPanel() {
       setLoading(true);
       setError("");
       
-      const response = await axios.get("http://localhost:3000/users", {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      console.log('🔄 Fetching all users from API...');
+      const response = await userAPI.getAllUsers();
+      
+      console.log('📦 Users response:', response);
 
-      if (response.data.success) {
-        setUsers(response.data.users);
+      if (response.success) {
+        setUsers(response.users || []);
+        console.log('✅ Loaded', response.users?.length || 0, 'users');
       }
     } catch (err) {
-      console.error("Error fetching users:", err);
-      setError(
-        "❌ " + (err.response?.data?.message || "Không thể tải danh sách users")
-      );
+      console.error("❌ Error fetching users:", err);
+      console.error("Error details:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status
+      });
+      
+      let errorMsg = "Không thể tải danh sách users";
+      if (err.response?.status === 401) {
+        errorMsg = "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại!";
+      } else if (err.response?.status === 403) {
+        errorMsg = "Bạn không có quyền truy cập Admin Panel!";
+      } else if (err.response?.data?.message) {
+        errorMsg = err.response.data.message;
+      }
+      
+      setError("❌ " + errorMsg);
     } finally {
       setLoading(false);
     }
@@ -45,17 +57,18 @@ function AdminPanel() {
 
   const fetchStats = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/users/stats", {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      console.log('🔄 Fetching user stats...');
+      const response = await userAPI.getUserStats();
+      
+      console.log('📊 Stats response:', response);
 
-      if (response.data.success) {
-        setStats(response.data.stats);
+      if (response.success) {
+        setStats(response.stats || { total: 0, admin: 0, moderator: 0, user: 0 });
+        console.log('✅ Stats loaded:', response.stats);
       }
     } catch (err) {
-      console.error("Error fetching stats:", err);
+      console.error("❌ Error fetching stats:", err);
+      // Stats không quan trọng bằng users list, chỉ log error
     }
   };
 
@@ -69,35 +82,30 @@ function AdminPanel() {
       setMessage("");
       setError("");
 
-      const response = await axios.put(
-        `http://localhost:3000/users/${userId}/role`,
-        { role: newRole },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      console.log('🔄 Updating role for user:', userId, 'to', newRole);
+      const response = await userAPI.updateUserRole(userId, newRole);
 
-      if (response.data.success) {
-        setMessage(`✅ ${response.data.message}`);
+      if (response.success) {
+        setMessage(`✅ ${response.message}`);
+        console.log('✅ Role updated successfully');
+        
         // Refresh danh sách
-        fetchAllUsers();
-        fetchStats();
+        await fetchAllUsers();
+        await fetchStats();
+        
         setSelectedUser(null);
         setNewRole("");
       }
     } catch (err) {
-      console.error("Error updating role:", err);
-      setError(
-        "❌ " + (err.response?.data?.message || "Lỗi khi cập nhật role")
-      );
+      console.error("❌ Error updating role:", err);
+      const errorMsg = err.response?.data?.message || "Lỗi khi cập nhật role";
+      setError("❌ " + errorMsg);
     }
   };
 
   const handleDeleteUser = async (userId, userName) => {
     const confirmDelete = window.confirm(
-      `Bạn có chắc muốn xóa user "${userName}"?`
+      `Bạn có chắc muốn xóa user "${userName}"?\n\n⚠️ Hành động này không thể hoàn tác!`
     );
 
     if (!confirmDelete) return;
@@ -106,26 +114,21 @@ function AdminPanel() {
       setMessage("");
       setError("");
 
-      const response = await axios.delete(
-        `http://localhost:3000/users/${userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      console.log('🗑️ Deleting user:', userId, userName);
+      const response = await userAPI.deleteUser(userId);
 
-      if (response.data.success) {
-        setMessage(`✅ ${response.data.message}`);
+      if (response.success) {
+        setMessage(`✅ ${response.message}`);
+        console.log('✅ User deleted successfully');
+        
         // Cập nhật danh sách sau khi xóa
-        fetchAllUsers();
-        fetchStats();
+        await fetchAllUsers();
+        await fetchStats();
       }
     } catch (err) {
-      console.error("Error deleting user:", err);
-      setError(
-        "❌ " + (err.response?.data?.message || "Lỗi khi xóa user")
-      );
+      console.error("❌ Error deleting user:", err);
+      const errorMsg = err.response?.data?.message || "Lỗi khi xóa user";
+      setError("❌ " + errorMsg);
     }
   };
 

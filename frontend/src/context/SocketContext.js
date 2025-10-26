@@ -26,7 +26,7 @@ export const SocketProvider = ({ children }) => {
         if (token && user) {
             console.log('🔌 Connecting to Socket.IO server...');
 
-            const newSocket = io('http://localhost:5000', {
+            const newSocket = io('http://localhost:3000', {
                 auth: { token },
                 transports: ['websocket', 'polling']
             });

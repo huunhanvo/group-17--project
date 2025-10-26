@@ -31,23 +31,30 @@ const resizeAvatar = async (req, res, next) => {
     }
 
     try {
-        // Resize ảnh về 500x500px, format webp để tối ưu dung lượng
+        console.log('🔄 Đang resize ảnh...', {
+            originalSize: req.file.size,
+            originalFormat: req.file.mimetype
+        });
+
+        // Resize ảnh về 500x500px, format webp/jpeg để tối ưu dung lượng
+        // Giảm quality xuống 80% để upload nhanh hơn
         const resizedBuffer = await sharp(req.file.buffer)
             .resize(500, 500, {
                 fit: 'cover',
                 position: 'center'
             })
-            .webp({ quality: 90 })
+            .jpeg({ quality: 80, progressive: true }) // Dùng JPEG thay vì WebP cho tương thích tốt hơn
             .toBuffer();
 
         // Gắn buffer đã resize vào req.file
         req.file.buffer = resizedBuffer;
-        req.file.mimetype = 'image/webp';
+        req.file.mimetype = 'image/jpeg';
 
         console.log('✅ Ảnh đã được resize:', {
             originalSize: req.file.size,
             resizedSize: resizedBuffer.length,
-            format: 'webp'
+            reduction: `${((1 - resizedBuffer.length / req.file.size) * 100).toFixed(1)}%`,
+            format: 'jpeg'
         });
 
         next();

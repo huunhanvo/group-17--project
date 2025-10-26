@@ -236,21 +236,45 @@ const authAPI = {
 
 // Other API methods (users, admin, etc.)
 const userAPI = {
-    // Get all users (admin only)
+    // Get all users (admin/moderator only)
     getAllUsers: async () => {
         const response = await api.get('/api/users');
         return response.data;
     },
 
-    // Delete user (admin only)
-    deleteUser: async (userId) => {
-        const response = await api.delete(`/api/users/${userId}`);
+    // Get user stats (admin/moderator only)
+    getUserStats: async () => {
+        const response = await api.get('/api/users/stats');
+        return response.data;
+    },
+
+    // Get user by ID
+    getUserById: async (userId) => {
+        const response = await api.get(`/api/users/${userId}`);
         return response.data;
     },
 
     // Add user
     addUser: async (userData) => {
         const response = await api.post('/api/users', userData);
+        return response.data;
+    },
+
+    // Update user
+    updateUser: async (userId, userData) => {
+        const response = await api.put(`/api/users/${userId}`, userData);
+        return response.data;
+    },
+
+    // Update user role (admin only)
+    updateUserRole: async (userId, role) => {
+        const response = await api.put(`/api/users/${userId}/role`, { role });
+        return response.data;
+    },
+
+    // Delete user (admin only)
+    deleteUser: async (userId) => {
+        const response = await api.delete(`/api/users/${userId}`);
         return response.data;
     }
 };
