@@ -1,0 +1,192 @@
+.profile-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 40px 20px;
+}
+
+.profile-container {
+  max-width: 900px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+.profile-card,
+.features-card {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.profile-header {
+  text-align: center;
+  padding-bottom: 30px;
+  border-bottom: 2px solid #f1f3f5;
+}
+
+.avatar-section {
+  margin-bottom: 20px;
+}
+
+.avatar-image {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #667eea;
+}
+
+.avatar-placeholder {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  font-weight: bold;
+  margin: 0 auto;
+}
+
+.profile-header h1 {
+  margin: 10px 0;
+  color: #333;
+  font-size: 28px;
+}
+
+.email {
+  color: #666;
+  font-size: 16px;
+  margin-bottom: 15px;
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.role-admin {
+  background: #dc3545;
+  color: white;
+}
+
+.role-moderator {
+  background: #ffc107;
+  color: #333;
+}
+
+.role-user {
+  background: #28a745;
+  color: white;
+}
+
+.profile-info {
+  padding: 20px 0;
+}
+
+.profile-info h2 {
+  margin: 0 0 20px 0;
+  color: #333;
+  font-size: 20px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f3f5;
+}
+
+.info-row .label {
+  color: #666;
+  font-weight: 600;
+}
+
+.info-row .value {
+  color: #333;
+  text-align: right;
+}
+
+.profile-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.profile-actions button {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-admin {
+  background: #dc3545;
+  color: white;
+}
+
+.btn-edit {
+  background: #667eea;
+  color: white;
+}
+
+.btn-logout {
+  background: #6c757d;
+  color: white;
+}
+
+.profile-actions button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.features-card h2 {
+  margin: 0 0 20px 0;
+  color: #333;
+  font-size: 20px;
+}
+
+.features-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.features-list li {
+  padding: 10px 0;
+  color: #666;
+  font-size: 15px;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  font-size: 24px;
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .profile-actions {
+    flex-direction: column;
+  }
+  
+  .info-row {
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .info-row .value {
+    text-align: left;
+  }
+}

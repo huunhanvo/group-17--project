@@ -1,0 +1,196 @@
+import React, { useState } from 'react';import React, { useState, useEffect } from 'react';
+
+import { useDispatch, useSelector } from 'react-redux';import { useDispatch, useSelector } from 'react-redux';
+
+import { useNavigate, Link } from 'react-router-dom';import { useNavigate, Link } from 'react-router-dom';
+
+import { loginUser, selectIsLoading, selectAuthError } from '../store/slices/authSlice';import { login, clearError } from '../redux/authSlice';
+
+import { toast } from 'react-toastify';
+
+import './Login.css';const Login = () => {
+
+  const [email, setEmail] = useState('');
+
+const Login = () => {  const [password, setPassword] = useState('');
+
+  const dispatch = useDispatch();  const dispatch = useDispatch();
+
+  const navigate = useNavigate();  const navigate = useNavigate();
+
+  const isLoading = useSelector(selectIsLoading);  const { isAuthenticated, loading, error } = useSelector((state) => state.auth);
+
+  const error = useSelector(selectAuthError);
+
+    useEffect(() => {
+
+  const [formData, setFormData] = useState({    if (isAuthenticated) {
+
+    email: '',      navigate('/profile');
+
+    password: ''    }
+
+  });  }, [isAuthenticated, navigate]);
+
+
+
+  const handleChange = (e) => {  useEffect(() => {
+
+    const { name, value } = e.target;    return () => dispatch(clearError());
+
+    setFormData(prev => ({ ...prev, [name]: value }));  }, [dispatch]);
+
+  };
+
+  const handleSubmit = async (e) => {
+
+  const handleSubmit = async (e) => {    e.preventDefault();
+
+    e.preventDefault();    await dispatch(login({ email, password }));
+
+      };
+
+    console.log('🔐 Attempting login...', { email: formData.email });
+
+      return (
+
+    try {    <div className="auth-container">
+
+      const result = await dispatch(loginUser(formData)).unwrap();      <div className="auth-box">
+
+              <h2>🔐 Đăng Nhập</h2>
+
+      console.log('✅ Login successful:', result);        
+
+      toast.success(`Chào mừng ${result.user.name}! 🎉`);        {error && <div className="alert alert-error">{error}</div>}
+
+              
+
+      // Redirect based on role        <form onSubmit={handleSubmit}>
+
+      if (result.user.role === 'admin') {          <div className="form-group">
+
+        navigate('/admin');            <label>Email</label>
+
+      } else {            <input
+
+        navigate('/profile');              type="email"
+
+      }              value={email}
+
+    } catch (err) {              onChange={(e) => setEmail(e.target.value)}
+
+      console.error('❌ Login failed:', err);              placeholder="admin@example.com"
+
+      toast.error(err || 'Đăng nhập thất bại');              required
+
+    }            />
+
+  };          </div>
+
+
+
+  return (          <div className="form-group">
+
+    <div className="login-page">            <label>Mật khẩu</label>
+
+      <div className="login-container">            <input
+
+        <div className="login-card">              type="password"
+
+          <h1>🔐 Đăng nhập</h1>              value={password}
+
+          <p className="subtitle">Chào mừng trở lại!</p>              onChange={(e) => setPassword(e.target.value)}
+
+              placeholder="••••••"
+
+          {error && (              required
+
+            <div className="error-banner">            />
+
+              ❌ {error}          </div>
+
+            </div>
+
+          )}          <button type="submit" className="btn btn-primary" disabled={loading}>
+
+            {loading ? 'Đang đăng nhập...' : 'Đăng Nhập'}
+
+          <form onSubmit={handleSubmit}>          </button>
+
+            <div className="form-group">        </form>
+
+              <label htmlFor="email">📧 Email</label>
+
+              <input        <div className="auth-links">
+
+                type="email"          <Link to="/forgot-password">Quên mật khẩu?</Link>
+
+                id="email"          {' | '}
+
+                name="email"          <Link to="/signup">Đăng ký tài khoản mới</Link>
+
+                placeholder="your@email.com"        </div>
+
+                value={formData.email}
+
+                onChange={handleChange}        <div style={{ marginTop: '30px', padding: '15px', background: '#f9f9f9', borderRadius: '8px', fontSize: '14px' }}>
+
+                required          <strong>🧪 Test Accounts:</strong><br />
+
+                disabled={isLoading}          Admin: admin@example.com / admin123<br />
+
+              />          User: john@example.com / john123
+
+            </div>        </div>
+
+      </div>
+
+            <div className="form-group">    </div>
+
+              <label htmlFor="password">🔒 Mật khẩu</label>  );
+
+              <input};
+
+                type="password"
+
+                id="password"export default Login;
+
+                name="password"
+                placeholder="••••••••"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                disabled={isLoading}
+              />
+            </div>
+
+            <button 
+              type="submit" 
+              className="btn-primary"
+              disabled={isLoading}
+            >
+              {isLoading ? '⏳ Đang đăng nhập...' : '✅ Đăng nhập'}
+            </button>
+          </form>
+
+          <div className="links">
+            <Link to="/forgot-password">🔑 Quên mật khẩu?</Link>
+            <span className="divider">|</span>
+            <Link to="/signup">✍️ Đăng ký tài khoản mới</Link>
+          </div>
+
+          <div className="demo-accounts">
+            <p><strong>🎭 Demo Accounts:</strong></p>
+            <ul>
+              <li>👑 Admin: admin@example.com / admin123</li>
+              <li>👤 User: user@example.com / user123</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Login;
