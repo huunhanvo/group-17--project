@@ -276,6 +276,20 @@ const userAPI = {
     deleteUser: async (userId) => {
         const response = await api.delete(`/api/users/${userId}`);
         return response.data;
+    },
+
+    // Get activity logs (admin only or own logs)
+    getActivityLogs: async (endpoint, queryParams = '') => {
+        const url = queryParams ? `${endpoint}?${queryParams}` : endpoint;
+        const response = await api.get(url);
+        return response.data;
+    },
+
+    // Get activity stats (admin only)
+    getActivityStats: async (userId = null) => {
+        const url = userId ? `/api/logs/stats?userId=${userId}` : '/api/logs/stats';
+        const response = await api.get(url);
+        return response.data;
     }
 };
 
