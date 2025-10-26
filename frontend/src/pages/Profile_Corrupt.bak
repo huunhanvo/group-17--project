@@ -1,0 +1,315 @@
+import React, { useEffect } from 'react';import React, { useState, useEffect } from 'react';
+
+import { useSelector, useDispatch } from 'react-redux';import { useSelector, useDispatch } from 'react-redux';
+
+import { useNavigate } from 'react-router-dom';import { useNavigate } from 'react-router-dom';
+
+import { import { logout, updateUserProfile } from '../redux/authSlice';
+
+  selectCurrentUser, import api from '../utils/api';
+
+  selectIsAuthenticated, 
+
+  logoutUser const Profile = () => {
+
+} from '../store/slices/authSlice';  const { user } = useSelector((state) => state.auth);
+
+import { toast } from 'react-toastify';  const dispatch = useDispatch();
+
+import './Profile.css';  const navigate = useNavigate();
+
+  
+
+const Profile = () => {  const [isEditing, setIsEditing] = useState(false);
+
+  const dispatch = useDispatch();  const [formData, setFormData] = useState({ name: user?.name || '', email: user?.email || '' });
+
+  const navigate = useNavigate();  const [avatarFile, setAvatarFile] = useState(null);
+
+  const user = useSelector(selectCurrentUser);  const [loading, setLoading] = useState(false);
+
+  const isAuthenticated = useSelector(selectIsAuthenticated);  const [message, setMessage] = useState({ type: '', text: '' });
+
+
+
+  useEffect(() => {  const handleLogout = async () => {
+
+    if (!isAuthenticated) {    await dispatch(logout());
+
+      navigate('/login');    navigate('/login');
+
+    }  };
+
+  }, [isAuthenticated, navigate]);
+
+  const handleUpdateProfile = async (e) => {
+
+  const handleLogout = async () => {    e.preventDefault();
+
+    try {    setLoading(true);
+
+      await dispatch(logoutUser()).unwrap();    setMessage({ type: '', text: '' });
+
+      toast.success('Đăng xuất thành công! 👋');
+
+      navigate('/login');    try {
+
+    } catch (error) {      const response = await api.put('/profile', formData);
+
+      console.error('Logout error:', error);      dispatch(updateUserProfile(response.data.data));
+
+    }      setMessage({ type: 'success', text: '✅ Cập nhật profile thành công!' });
+
+  };      setIsEditing(false);
+
+    } catch (error) {
+
+  if (!user) {      setMessage({ type: 'error', text: error.response?.data?.message || 'Lỗi cập nhật profile' });
+
+    return <div className="loading">⏳ Đang tải...</div>;    } finally {
+
+  }      setLoading(false);
+
+    }
+
+  const getRoleBadgeClass = (role) => {  };
+
+    return `role-badge role-${role}`;
+
+  };  const handleUploadAvatar = async (e) => {
+
+    e.preventDefault();
+
+  return (    if (!avatarFile) {
+
+    <div className="profile-page">      setMessage({ type: 'error', text: 'Vui lòng chọn file ảnh' });
+
+      <div className="profile-container">      return;
+
+        <div className="profile-card">    }
+
+          <div className="profile-header">
+
+            <div className="avatar-section">    setLoading(true);
+
+              {user.avatar ? (    setMessage({ type: '', text: '' });
+
+                <img src={user.avatar} alt={user.name} className="avatar-image" />
+
+              ) : (    try {
+
+                <div className="avatar-placeholder">      const formData = new FormData();
+
+                  {user.name?.charAt(0).toUpperCase()}      formData.append('avatar', avatarFile);
+
+                </div>
+
+              )}      const response = await api.post('/profile/avatar', formData, {
+
+            </div>        headers: { 'Content-Type': 'multipart/form-data' }
+
+            <h1>{user.name}</h1>      });
+
+            <p className="email">{user.email}</p>
+
+            <span className={getRoleBadgeClass(user.role)}>      dispatch(updateUserProfile({ avatar: response.data.data.avatar }));
+
+              {user.role === 'admin' && '👑 Admin'}      setMessage({ type: 'success', text: '✅ Upload avatar thành công!' });
+
+              {user.role === 'moderator' && '⭐ Moderator'}      setAvatarFile(null);
+
+              {user.role === 'user' && '👤 User'}    } catch (error) {
+
+            </span>      setMessage({ type: 'error', text: error.response?.data?.message || 'Lỗi upload avatar' });
+
+          </div>    } finally {
+
+      setLoading(false);
+
+          <div className="profile-info">    }
+
+            <h2>📋 Thông tin tài khoản</h2>  };
+
+            
+
+            <div className="info-row">  return (
+
+              <span className="label">👤 Tên:</span>    <div className="dashboard-container">
+
+              <span className="value">{user.name}</span>      <div className="dashboard">
+
+            </div>        <div className="dashboard-header">
+
+          <h1>👤 Profile</h1>
+
+            <div className="info-row">          <button onClick={handleLogout} className="btn btn-primary">Đăng Xuất</button>
+
+              <span className="label">📧 Email:</span>        </div>
+
+              <span className="value">{user.email}</span>
+
+            </div>        {message.text && (
+
+          <div className={`alert alert-${message.type}`}>{message.text}</div>
+
+            <div className="info-row">        )}
+
+              <span className="label">🎭 Vai trò:</span>
+
+              <span className="value">{user.role}</span>        {/* User Card */}
+
+            </div>        <div className="user-card">
+
+          <img src={user?.avatar} alt={user?.name} className="user-avatar" />
+
+            <div className="info-row">          <div>
+
+              <span className="label">📅 Ngày tạo:</span>            <h2>{user?.name}</h2>
+
+              <span className="value">            <p>{user?.email}</p>
+
+                {user.createdAt ? new Date(user.createdAt).toLocaleDateString('vi-VN') : 'N/A'}            <span className={`badge badge-${user?.role}`}>{user?.role}</span>
+
+              </span>          </div>
+
+            </div>        </div>
+
+
+
+            {user.lastLogin && (        {/* Upload Avatar */}
+
+              <div className="info-row">        <div style={{ background: '#f9f9f9', padding: '20px', borderRadius: '10px', marginBottom: '20px' }}>
+
+                <span className="label">🕐 Đăng nhập lần cuối:</span>          <h3>📸 Upload Avatar</h3>
+
+                <span className="value">          <form onSubmit={handleUploadAvatar}>
+
+                  {new Date(user.lastLogin).toLocaleString('vi-VN')}            <input
+
+                </span>              type="file"
+
+              </div>              accept="image/*"
+
+            )}              onChange={(e) => setAvatarFile(e.target.files[0])}
+
+          </div>              style={{ marginBottom: '10px' }}
+
+            />
+
+          <div className="profile-actions">            <button type="submit" className="btn btn-primary" disabled={loading}>
+
+            {user.role === 'admin' && (              {loading ? 'Đang upload...' : 'Upload Avatar'}
+
+              <button             </button>
+
+                className="btn-admin"          </form>
+
+                onClick={() => navigate('/admin')}        </div>
+
+              >
+
+                👑 Admin Panel        {/* Edit Profile */}
+
+              </button>        <div style={{ background: '#f9f9f9', padding: '20px', borderRadius: '10px' }}>
+
+            )}          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+
+                        <h3>✏️ Thông Tin Cá Nhân</h3>
+
+            <button             <button
+
+              className="btn-edit"              onClick={() => setIsEditing(!isEditing)}
+
+              onClick={() => toast.info('Chức năng chỉnh sửa đang phát triển 🚧')}              style={{ background: 'none', border: '1px solid #667eea', color: '#667eea', padding: '5px 15px', borderRadius: '5px', cursor: 'pointer' }}
+
+            >            >
+
+              ✏️ Chỉnh sửa              {isEditing ? 'Hủy' : 'Chỉnh Sửa'}
+
+            </button>            </button>
+
+                      </div>
+
+            <button 
+
+              className="btn-logout"          {isEditing ? (
+
+              onClick={handleLogout}            <form onSubmit={handleUpdateProfile}>
+
+            >              <div className="form-group">
+
+              🚪 Đăng xuất                <label>Tên</label>
+
+            </button>                <input
+
+          </div>                  type="text"
+
+        </div>                  value={formData.name}
+
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+
+        <div className="features-card">                  required
+
+          <h2>✨ Tính năng</h2>                />
+
+          <ul className="features-list">              </div>
+
+            <li>✅ Xem thông tin cá nhân</li>              <div className="form-group">
+
+            <li>✅ Quản lý token JWT</li>                <label>Email</label>
+
+            <li>✅ Redux state management</li>                <input
+
+            <li>✅ Protected routes</li>                  type="email"
+
+            {user.role === 'admin' && (                  value={formData.email}
+
+              <>                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+
+                <li>✅ Quản lý users (Admin)</li>                  required
+
+                <li>✅ Phân quyền RBAC</li>                />
+
+                <li>✅ Xem activity logs</li>              </div>
+
+              </>              <button type="submit" className="btn btn-primary" disabled={loading}>
+
+            )}                {loading ? 'Đang lưu...' : 'Lưu Thay Đổi'}
+
+          </ul>              </button>
+
+        </div>            </form>
+
+      </div>          ) : (
+
+    </div>            <div>
+
+  );              <p><strong>Tên:</strong> {user?.name}</p>
+
+};              <p><strong>Email:</strong> {user?.email}</p>
+
+              <p><strong>Role:</strong> <span className={`badge badge-${user?.role}`}>{user?.role}</span></p>
+
+export default Profile;              <p><strong>Ngày tạo:</strong> {new Date(user?.createdAt).toLocaleDateString('vi-VN')}</p>
+
+            </div>
+          )}
+        </div>
+
+        {/* Quick Links */}
+        <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
+          <button onClick={() => navigate('/users')} className="btn btn-primary">
+            👥 Danh Sách Users
+          </button>
+          {user?.role === 'admin' && (
+            <button onClick={() => navigate('/admin')} className="btn btn-primary">
+              🔧 Admin Dashboard
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Profile;
